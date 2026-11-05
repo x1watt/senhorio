@@ -1,0 +1,275 @@
+{
+  "@@locale": "en",
+  "appTitle": "Senhorio",
+  "active": "Active",
+  "added": "Added",
+  "addMember": "Add member",
+  "address": "Address",
+  "all": "All",
+  "amount": "Amount",
+  "apartment": "Apartment",
+  "apartmentOptional": "Apartment (optional)",
+  "area": "Area (m²)",
+  "availableForRent": "Available for rent",
+  "backupPassword": "The backup is encrypted. Keep this password with it:",
+  "backupSaved": "Backup saved",
+  "building": "Building",
+  "buildings": "Buildings",
+  "camera": "Camera",
+  "cancel": "Cancel",
+  "categories": "Categories",
+  "category": "Category",
+  "changed": "Changed",
+  "checkpoints": "Checkpoints",
+  "checkpointsHelp": "Every change is kept in the archive. Open a checkpoint to see what was added, changed or deleted since then, by whom, and to restore it.",
+  "checkpointsSubtitle": "See and undo what others changed or deleted",
+  "comingSoon": "Coming soon",
+  "confirmDelete": "Delete this item? It can be restored from a checkpoint.",
+  "confirmRestore": "Restore the values from the checkpoint? This change is synced to everyone.",
+  "confirmRevoke": "Revoke this member? They stop receiving and changing this building.",
+  "consumption": "Consumption",
+  "consumptionUnit": "Consumption unit",
+  "copied": "Copied",
+  "copyNpub": "Copy npub",
+  "currency": "Currency",
+  "dashboard": "Overview",
+  "date": "Date",
+  "delete": "Delete",
+  "deleted": "Deleted",
+  "deposit": "Deposit",
+  "description": "Description",
+  "documents": "Emails & documents",
+  "dueDay": "Due day",
+  "dueDayHint": "Day of month (weekly: 1 = Monday)",
+  "edit": "Edit",
+  "email": "Email",
+  "endDate": "End date",
+  "endLeaseToday": "End lease today",
+  "everyonePaid": "Everyone is up to date",
+  "expectedAmount": "Expected amount",
+  "expense": "Expense",
+  "expenses": "Expenses",
+  "expensesByCategory": "Expenses by category",
+  "expensesThisMonth": "Expenses this month",
+  "exportBackup": "Export backup",
+  "exportBackupHelp": "The archive with its whole history",
+  "file": "File",
+  "floor": "Floor",
+  "frequencyLabel": "Frequency",
+  "gallery": "Gallery",
+  "graceDays": "Grace days",
+  "icon": "Icon",
+  "identityHelp": "Your identity is a NOSTR key. Give your npub to the owner of a building so they can add you; keep the nsec secret, it is your signature.",
+  "identityImported": "Identity imported",
+  "importNsec": "Import an existing nsec",
+  "importNsecWarning": "This replaces your current identity on this device. Make sure you saved the current nsec.",
+  "inactive": "Inactive",
+  "income": "Income",
+  "incomeThisMonth": "Rent this month",
+  "incomeVsExpenses": "Income vs expenses",
+  "invalidNpub": "Not a valid npub",
+  "invalidNsec": "Not a valid nsec",
+  "invalidNumber": "Invalid number",
+  "keptEmpty": "Kept empty",
+  "language": "Language",
+  "last12Months": "Last 12 months",
+  "lateRent": "Late rent",
+  "member": "Member",
+  "members": "Members",
+  "membersHelpMember": "Members share this building's accounting. Only the owner can add or revoke members.",
+  "membersHelpOwner": "Add the npub of each person who shares this building. They receive all of its data over encrypted Reticulum sync.",
+  "method": "Method",
+  "methodHint": "Transfer, cash, MB Way…",
+  "more": "More",
+  "myIdentity": "My identity",
+  "name": "Name",
+  "net": "Net",
+  "newApartment": "New apartment",
+  "newBuilding": "New building",
+  "newCategory": "New category",
+  "newCheckpoint": "New checkpoint",
+  "newExpense": "New expense",
+  "newLease": "New lease",
+  "newRecurringBill": "New recurring bill",
+  "newRoom": "New room",
+  "newTenant": "New tenant",
+  "noApartments": "No apartments yet. Add one with +.",
+  "noBuildings": "No buildings yet.",
+  "noChanges": "Nothing changed since this checkpoint",
+  "noCheckpoints": "No checkpoints yet",
+  "noExpenses": "No expenses yet",
+  "noRecurringBills": "No recurring bills (water, energy, internet…)",
+  "noRooms": "No rooms",
+  "noTenants": "No tenants yet",
+  "notes": "Notes",
+  "nothingDue": "Nothing due in the next two weeks",
+  "nsecWarning": "Anyone with your nsec can act as you. Show it?",
+  "occupancy": "Occupancy",
+  "ok": "OK",
+  "owner": "Owner",
+  "paidOn": "Paid on",
+  "pastLeases": "Past leases",
+  "payments": "Payments",
+  "period": "Period",
+  "perRoomMonth": "per rented room/month",
+  "phone": "Phone",
+  "receipts": "Receipts",
+  "recurringBills": "Recurring bills",
+  "registerExpense": "Register",
+  "registerPayment": "Register payment",
+  "rent": "Rent",
+  "rentCollected": "Rent collected",
+  "required": "Required",
+  "restore": "Restore",
+  "revoke": "Revoke",
+  "roomOptional": "Room (optional)",
+  "save": "Save",
+  "secretKey": "Secret key (nsec)",
+  "since": "Since",
+  "startDate": "Start date",
+  "statistics": "Statistics",
+  "suggested": "Suggested from your history",
+  "sync": "Sync",
+  "systemLanguage": "System",
+  "taxId": "Tax id (NIF)",
+  "tenant": "Tenant",
+  "tenants": "Tenants",
+  "uncategorised": "Uncategorised",
+  "undoAdd": "Remove",
+  "units": "Units",
+  "upcomingBills": "Bills due soon",
+  "upToDate": "Up to date",
+  "vacant": "Vacant",
+  "vanished": "Removed from the file",
+  "vendor": "Vendor",
+  "waitingForSync": "Waiting for sync",
+  "welcome": "Welcome! Start by adding a building in the Buildings tab.",
+  "wholeApartment": "Whole apartment",
+  "wholeBuilding": "Whole building",
+  "you": "You",
+  "changesSince": "Since {label}",
+  "@changesSince": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "dueDayN": "due day {day}",
+  "@dueDayN": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "nextDue": "next {date}",
+  "@nextDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "paidOf": "{paid} of {total}",
+  "@paidOf": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "lateAmount": "{amount} late ({count} periods)",
+  "@lateAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "periodsLate": "{count, plural, =1{1 period late} other{{count} periods late}}",
+  "@periodsLate": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "roomsRented": "{rented} of {total} rooms rented",
+  "@roomsRented": {
+    "placeholders": {
+      "rented": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultCategory": "{key, select, water{Water} energy{Electricity} gas{Gas} internet{Internet} condo{Condo fees} material{Material} repairs{Repairs} cleaning{Cleaning} food{Food} furniture{Furniture} insurance{Insurance} taxes{Taxes (IMI)} other{Other}}",
+  "@defaultCategory": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "frequency": "{f, select, weekly{Weekly} monthly{Monthly} quarterly{Quarterly} yearly{Yearly} other{{f}}}",
+  "@frequency": {
+    "placeholders": {
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "entityName": "{t, select, buildings{Building} apartments{Apartment} rooms{Room} tenants{Tenant} leases{Lease} payments{Payment} categories{Category} expenses{Expense} recurring_bills{Recurring bill} documents{Document} members{Member} other{{t}}}",
+  "@entityName": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNow": "Sync now",
+  "syncOverReticulum": "Sync over Reticulum",
+  "syncHelp": "Encrypted peer-to-peer sync with the members of your buildings, over the internet and the local network.",
+  "reticulumAddress": "Reticulum address",
+  "hubs": "Hubs",
+  "hubsHelp": "One host:port per line",
+  "noHubConnected": "No hub connected",
+  "localNetwork": "Local network",
+  "on": "On",
+  "off": "Off",
+  "peers": "Peers seen",
+  "noPeersYet": "No peers seen yet",
+  "activity": "Activity",
+  "lastSync": "Last sync",
+  "syncCounters": "{sent} sent · {received} received · {eventsIn} changes in · {eventsOut} out · {blobs} receipts",
+  "@syncCounters": {
+    "placeholders": {
+      "sent": {
+        "type": "int"
+      },
+      "received": {
+        "type": "int"
+      },
+      "eventsIn": {
+        "type": "int"
+      },
+      "eventsOut": {
+        "type": "int"
+      },
+      "blobs": {
+        "type": "int"
+      }
+    }
+  },
+  "syncInBackground": "Keep syncing in the background",
+  "syncInBackgroundHelp": "Shows a notification while active, so changes arrive with the app closed."
+}

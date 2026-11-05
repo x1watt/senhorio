@@ -1,0 +1,40 @@
+name: senhorio
+description: "Senhorio — shared rent and expense accounting for buildings, synced peer-to-peer over Reticulum."
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  cupertino_icons: ^1.0.8
+
+  zx:                                    # local archive-database (SQL, time travel, seals)
+    path: ../zx
+  reticulum:                             # Reticulum transport, LXMF, NOSTR helpers
+    path: ../../xprs/reticulum-dart
+
+  provider: ^6.1.2
+  path_provider: ^2.1.4
+  flutter_secure_storage: ^10.3.1        # nsec + DB password in the OS keystore
+  image_picker: ^1.1.2                   # camera / gallery on Android
+  file_selector: ^1.0.3                  # file picker on desktop
+  image: ^4.3.0                          # receipt resize / JPEG re-encode
+  fl_chart: ^0.69.0
+  qr_flutter: ^4.1.0
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
