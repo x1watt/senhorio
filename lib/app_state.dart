@@ -47,7 +47,7 @@ class AppState extends ChangeNotifier {
     final id = await ids.load();
     final store =
         await ZxStore.open('$base/senhorio.zx', password: await ids.dbPassword());
-    final ledger = Ledger(store, id)..signLocal = !kIsWeb;
+    final ledger = Ledger(store, id, device: await ids.deviceId())..signLocal = !kIsWeb;
     await ledger.init();
     final s = AppState._(base, ids, store, ledger);
     final lang = await store.getMeta('locale');

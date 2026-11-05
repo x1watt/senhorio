@@ -271,5 +271,64 @@
     }
   },
   "syncInBackground": "Keep syncing in the background",
-  "syncInBackgroundHelp": "Shows a notification while active, so changes arrive with the app closed."
+  "syncInBackgroundHelp": "Shows a notification while active, so changes arrive with the app closed.",
+  "roomsLate": "{n} late",
+  "@roomsLate": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "roomsOk": "{n} up to date",
+  "@roomsOk": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "roomsEmpty": "{n} empty",
+  "@roomsEmpty": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "occupancyHistory": "Occupancy history",
+  "today": "today",
+  "editTenant": "Edit tenant",
+  "idDocuments": "Identification documents",
+  "depositHeld": "Deposit held",
+  "registerDeposit": "Register deposit",
+  "settleDeposit": "Return / deduct",
+  "paymentKindLabel": "Type",
+  "paymentKind": "{k, select, rent{Rent} deposit{Deposit (caução)} provision{Provision} deposit_return{Deposit returned} deposit_deduction{Deposit kept for repairs} other{{k}}}",
+  "@paymentKind": {
+    "placeholders": {
+      "k": {
+        "type": "String"
+      }
+    }
+  },
+  "periodHint": "Rent only",
+  "phone2": "Second phone",
+  "emergencyContact": "Emergency contact",
+  "emergencyContactHint": "Name and phone",
+  "myOtherDevice": "My other device",
+  "checkForUpdates": "Check for updates",
+  "installedVersion": "Installed version",
+  "upToDateVersion": "You have the latest version",
+  "updateAvailable": "Version {v} is available",
+  "@updateAvailable": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "later": "Later",
+  "openReleasePage": "Release page",
+  "downloadAndInstall": "Download and install"
 }

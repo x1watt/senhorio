@@ -1147,6 +1147,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shows a notification while active, so changes arrive with the app closed.'**
   String get syncInBackgroundHelp;
+
+  /// No description provided for @roomsLate.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} late'**
+  String roomsLate(int n);
+
+  /// No description provided for @roomsOk.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} up to date'**
+  String roomsOk(int n);
+
+  /// No description provided for @roomsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} empty'**
+  String roomsEmpty(int n);
+
+  /// No description provided for @occupancyHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Occupancy history'**
+  String get occupancyHistory;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get today;
+
+  /// No description provided for @editTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit tenant'**
+  String get editTenant;
+
+  /// No description provided for @idDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Identification documents'**
+  String get idDocuments;
+
+  /// No description provided for @depositHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit held'**
+  String get depositHeld;
+
+  /// No description provided for @registerDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Register deposit'**
+  String get registerDeposit;
+
+  /// No description provided for @settleDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Return / deduct'**
+  String get settleDeposit;
+
+  /// No description provided for @paymentKindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get paymentKindLabel;
+
+  /// No description provided for @paymentKind.
+  ///
+  /// In en, this message translates to:
+  /// **'{k, select, rent{Rent} deposit{Deposit (caução)} provision{Provision} deposit_return{Deposit returned} deposit_deduction{Deposit kept for repairs} other{{k}}}'**
+  String paymentKind(String k);
+
+  /// No description provided for @periodHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent only'**
+  String get periodHint;
+
+  /// No description provided for @phone2.
+  ///
+  /// In en, this message translates to:
+  /// **'Second phone'**
+  String get phone2;
+
+  /// No description provided for @emergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contact'**
+  String get emergencyContact;
+
+  /// No description provided for @emergencyContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and phone'**
+  String get emergencyContactHint;
+
+  /// No description provided for @myOtherDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'My other device'**
+  String get myOtherDevice;
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get checkForUpdates;
+
+  /// No description provided for @installedVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed version'**
+  String get installedVersion;
+
+  /// No description provided for @upToDateVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'You have the latest version'**
+  String get upToDateVersion;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {v} is available'**
+  String updateAvailable(String v);
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @openReleasePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Release page'**
+  String get openReleasePage;
+
+  /// No description provided for @downloadAndInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Download and install'**
+  String get downloadAndInstall;
 }
 
 class _AppLocalizationsDelegate

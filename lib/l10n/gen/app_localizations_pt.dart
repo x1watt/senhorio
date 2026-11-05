@@ -614,4 +614,94 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get syncInBackgroundHelp =>
       'Mostra uma notificação enquanto ativo, para que as alterações cheguem com a app fechada.';
+
+  @override
+  String roomsLate(int n) {
+    return '$n em atraso';
+  }
+
+  @override
+  String roomsOk(int n) {
+    return '$n em dia';
+  }
+
+  @override
+  String roomsEmpty(int n) {
+    return '$n vazios';
+  }
+
+  @override
+  String get occupancyHistory => 'Histórico de ocupação';
+
+  @override
+  String get today => 'hoje';
+
+  @override
+  String get editTenant => 'Editar inquilino';
+
+  @override
+  String get idDocuments => 'Documentos de identificação';
+
+  @override
+  String get depositHeld => 'Caução retida';
+
+  @override
+  String get registerDeposit => 'Registar caução';
+
+  @override
+  String get settleDeposit => 'Devolver / deduzir';
+
+  @override
+  String get paymentKindLabel => 'Tipo';
+
+  @override
+  String paymentKind(String k) {
+    String _temp0 = intl.Intl.selectLogic(k, {
+      'rent': 'Renda',
+      'deposit': 'Caução',
+      'provision': 'Provisão',
+      'deposit_return': 'Caução devolvida',
+      'deposit_deduction': 'Caução retida para reparações',
+      'other': '$k',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get periodHint => 'Só para rendas';
+
+  @override
+  String get phone2 => 'Segundo telefone';
+
+  @override
+  String get emergencyContact => 'Contacto de emergência';
+
+  @override
+  String get emergencyContactHint => 'Nome e telefone';
+
+  @override
+  String get myOtherDevice => 'Outro dispositivo meu';
+
+  @override
+  String get checkForUpdates => 'Procurar atualizações';
+
+  @override
+  String get installedVersion => 'Versão instalada';
+
+  @override
+  String get upToDateVersion => 'Tem a versão mais recente';
+
+  @override
+  String updateAvailable(String v) {
+    return 'Versão $v disponível';
+  }
+
+  @override
+  String get later => 'Mais tarde';
+
+  @override
+  String get openReleasePage => 'Página da versão';
+
+  @override
+  String get downloadAndInstall => 'Descarregar e instalar';
 }

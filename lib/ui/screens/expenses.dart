@@ -1,12 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:file_selector/file_selector.dart';
-import 'package:image/image.dart' as img;
-import 'package:image_picker/image_picker.dart';
 
 import '../../app_state.dart';
 import '../../core/dates.dart';
@@ -14,6 +9,7 @@ import '../../core/money.dart';
 import '../../data/zx_store.dart';
 import '../../domain/category_learner.dart';
 import '../forms.dart';
+import '../widgets/attachments.dart';
 import '../widgets/common.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -205,27 +201,6 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
   DbRow? get _category => _cats.where((c) => c['id'] == _v['category_id']).firstOrNull;
 
-  Future<void> _addPhoto(ImageSource? source) async {
-    Uint8List? bytes;
-    String mime = 'image/jpeg';
-    if (source != null) {
-      final x = await ImagePicker().pickImage(source: source, maxWidth: 2000, imageQuality: 85);
-      if (x == null) return;
-      bytes = await x.readAsBytes();
-    } else {
-      final f = await openFile(acceptedTypeGroups: [
-        const XTypeGroup(label: 'images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic']),
-        const XTypeGroup(label: 'pdf', extensions: ['pdf']),
-      ]);
-      if (f == null) return;
-      bytes = await f.readAsBytes();
-      if (f.name.toLowerCase().endsWith('.pdf')) mime = 'application/pdf';
-    }
-    if (mime == 'image/jpeg') bytes = await compute(shrinkImage, bytes);
-    final sha = await app.q.putAttachment(bytes, mime);
-    if (!_files.contains(sha)) setState(() => _files = [..._files, sha]);
-  }
-
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -263,7 +238,6 @@ class _ExpenseFormState extends State<ExpenseForm> {
   @override
   Widget build(BuildContext context) {
     final l = context.l;
-    final isDesktop = kIsWeb || !(Platform.isAndroid || Platform.isIOS);
     final suggested = _suggestions.map((s) => s.categoryId).toSet();
     return Scaffold(
       appBar: AppBar(
@@ -416,107 +390,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
           const SizedBox(height: 16),
           Text(l.receipts, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 6),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            for (final sha in _files)
-              AttachmentThumb(sha: sha, onRemove: () => setState(() => _files = _files.where((f) => f != sha).toList())),
-            if (!isDesktop)
-              _AddButton(icon: Icons.photo_camera, label: l.camera, onTap: () => _addPhoto(ImageSource.camera)),
-            if (!isDesktop)
-              _AddButton(icon: Icons.photo_library, label: l.gallery, onTap: () => _addPhoto(ImageSource.gallery)),
-            _AddButton(icon: Icons.attach_file, label: l.file, onTap: () => _addPhoto(null)),
-          ]),
+          AttachmentList(shas: _files, onChanged: (f) => setState(() => _files = f)),
         ]),
       ),
-    );
-  }
-}
-
-/// Re-encodes a photo as a JPEG at most 1600 px on its long side.
-Uint8List shrinkImage(Uint8List bytes) {
-  final im = img.decodeImage(bytes);
-  if (im == null) return bytes;
-  final long = im.width > im.height ? im.width : im.height;
-  final out = long > 1600
-      ? img.copyResize(im, width: im.width >= im.height ? 1600 : null, height: im.height > im.width ? 1600 : null)
-      : im;
-  final jpg = img.encodeJpg(out, quality: 80);
-  return jpg.length < bytes.length ? jpg : bytes;
-}
-
-class _AddButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _AddButton({required this.icon, required this.label, required this.onTap});
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 84,
-        height: 84,
-        child: OutlinedButton(
-          style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-          onPressed: onTap,
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon),
-            Text(label, style: const TextStyle(fontSize: 11)),
-          ]),
-        ),
-      );
-}
-
-class AttachmentThumb extends StatelessWidget {
-  final String sha;
-  final VoidCallback? onRemove;
-  const AttachmentThumb({super.key, required this.sha, this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<Uint8List?>(
-      future: context.app.q.attachment(sha),
-      builder: (context, snap) {
-        final bytes = snap.data;
-        final isPdf = bytes != null && bytes.length > 4 && String.fromCharCodes(bytes.sublist(0, 4)) == '%PDF';
-        Widget child;
-        if (bytes == null) {
-          child = snap.connectionState == ConnectionState.done
-              ? Tooltip(message: context.l.waitingForSync, child: const Icon(Icons.cloud_download))
-              : const CircularProgressIndicator();
-        } else if (isPdf) {
-          child = const Icon(Icons.picture_as_pdf, size: 40);
-        } else {
-          child = Image.memory(bytes, fit: BoxFit.cover, width: 84, height: 84);
-        }
-        return Stack(children: [
-          InkWell(
-            onTap: bytes == null || isPdf
-                ? null
-                : () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(),
-                      backgroundColor: Colors.black,
-                      body: InteractiveViewer(maxScale: 8, child: Center(child: Image.memory(bytes))),
-                    ))),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 84,
-                height: 84,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                alignment: Alignment.center,
-                child: child,
-              ),
-            ),
-          ),
-          if (onRemove != null)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: InkWell(
-                onTap: onRemove,
-                child: const CircleAvatar(radius: 11, child: Icon(Icons.close, size: 14)),
-              ),
-            ),
-        ]);
-      },
     );
   }
 }

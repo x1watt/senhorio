@@ -14,7 +14,9 @@ import '../../data/zx_store.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
+import '../../platform/updates.dart';
 import 'checkpoints.dart';
+import 'update_dialog.dart';
 import 'sync_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -56,6 +58,15 @@ class SettingsScreen extends StatelessWidget {
           enabled: false,
         ),
         if (!kIsWeb) ListTile(
+          leading: const Icon(Icons.system_update),
+          title: Text(l.checkForUpdates),
+          subtitle: FutureBuilder<String>(
+            future: UpdateService.installedVersion(),
+            builder: (c, s) => Text('${l.installedVersion} ${s.data ?? ''}'),
+          ),
+          onTap: () => checkForUpdates(context, manual: true),
+        ),
+        if (!kIsWeb) ListTile(
           leading: const Icon(Icons.save_alt),
           title: Text(l.exportBackup),
           subtitle: Text(l.exportBackupHelp),
@@ -77,7 +88,6 @@ class SettingsScreen extends StatelessWidget {
         const AboutListTile(
           icon: Icon(Icons.info_outline),
           applicationName: 'Senhorio',
-          applicationVersion: '0.1.0',
         ),
       ]),
     );

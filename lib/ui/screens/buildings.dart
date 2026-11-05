@@ -5,6 +5,7 @@ import '../../domain/rent_schedule.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
+import '../widgets/room_mosaic.dart';
 import 'building_tabs.dart';
 import 'room.dart';
 
@@ -144,6 +145,21 @@ class UnitsTab extends StatelessWidget {
         body: d.apartments.isEmpty
             ? EmptyState(Icons.door_front_door, l.noApartments)
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                if (d.rooms.isNotEmpty)
+                  RoomMosaic(
+                    rooms: [
+                      for (final r in d.rooms)
+                        RoomTileData(
+                          r,
+                          d.apartments.where((a) => a['id'] == r['apartment_id']).firstOrNull,
+                          RoomTileData.stateOf(d.active[r['id']]),
+                          d.tenants[d.active[r['id']]?.lease['tenant_id']]?['name'] as String?,
+                          d.active[r['id']]?.owedLate ?? 0,
+                        ),
+                    ],
+                    onTap: (r) => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => RoomScreen(roomId: r['id'] as String))),
+                  ),
                 for (final apt in d.apartments)
                   _apartmentTile(context, apt, d),
               ]),

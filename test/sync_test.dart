@@ -21,6 +21,17 @@ class Wire {
     return true;
   }
 
+  /// Delivers to every engine registered for [to] (devices of one npub).
+  final devices = <String, List<SyncEngine>>{};
+  Future<bool> sendAll(String from, String to, Map<String, Object?> msg) async {
+    final list = devices[to] ?? const [];
+    for (final e in list) {
+      final copy = jsonDecode(jsonEncode(msg)) as Map<String, Object?>;
+      pending.add(Future(() => e.onMessage(from, copy)));
+    }
+    return list.isNotEmpty;
+  }
+
   /// Runs until no message is in flight.
   Future<void> settle() async {
     for (var i = 0; i < 50; i++) {
@@ -45,7 +56,7 @@ void main() {
     final wire = Wire();
     Future<(ZxStore, Ledger, SyncEngine)> peer(String name, Identity id) async {
       final s = await ZxStore.open('${dir.path}/$name.zx');
-      final l = Ledger(s, id);
+      final l = Ledger(s, id, device: name);
       await l.init();
       final e = SyncEngine(l, s, send: (to, m) => wire.send(id.pubkey, to, m));
       wire.engines[id.pubkey] = e;
@@ -98,6 +109,42 @@ void main() {
     expect((await Queries(sb).apartments(b)).length, 1);
 
     for (final s in [sa, sb, se]) {
+      await s.close();
+    }
+  }, timeout: const Timeout(Duration(minutes: 5)));
+
+  test('one npub on two devices: both keep every change, in both directions', () async {
+    final wire = Wire();
+    final alice = Identity.generate();
+    Future<(ZxStore, Ledger, SyncEngine)> device(String name) async {
+      final s = await ZxStore.open('${dir.path}/$name.zx');
+      final l = Ledger(s, alice, device: name);
+      await l.init();
+      final e = SyncEngine(l, s, send: (to, m) => wire.sendAll(alice.pubkey, to, m));
+      wire.devices.putIfAbsent(alice.pubkey, () => []).add(e);
+      return (s, l, e);
+    }
+
+    final (s1, l1, e1) = await device('phone');
+    final (s2, l2, e2) = await device('laptop');
+    final b = await l1.createBuilding({'name': 'Casa'});
+    await l1.upsert('tenants', b, {'name': 'Ana'});
+    await wire.settle();
+    expect((await Queries(s2).tenants(b)).single['name'], 'Ana');
+    // both devices write at the same time (same author, separate sequences)
+    await l1.upsert('tenants', b, {'name': 'Bruno'});
+    await l2.upsert('tenants', b, {'name': 'Carla'});
+    await wire.settle();
+    for (final s in [s1, s2]) {
+      expect((await Queries(s).tenants(b)).map((t) => t['name']).toSet(), {'Ana', 'Bruno', 'Carla'});
+    }
+    // a third device restored from the nsec gets everything by asking
+    final (s3, _, e3) = await device('tablet');
+    await e3.syncWith(alice.pubkey);
+    await wire.settle();
+    expect((await Queries(s3).tenants(b)).length, 3);
+    expect(e1.stats.eventsOut + e2.stats.eventsOut, greaterThan(0));
+    for (final s in [s1, s2, s3]) {
       await s.close();
     }
   }, timeout: const Timeout(Duration(minutes: 5)));

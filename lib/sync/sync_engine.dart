@@ -68,25 +68,26 @@ class SyncEngine {
     };
   }
 
-  /// Everyone we share at least one building with (sync partners).
+  /// Everyone we share at least one building with (sync partners),
+  /// ourselves included: our other devices sync the same way.
   Future<Set<String>> partners() async {
     final all = await q.allMemberPubkeys();
     final owners = (await store.query('SELECT DISTINCT owner FROM buildings WHERE deleted = 0'))
         .map((r) => r['owner'] as String?)
         .whereType<String>();
-    return {...all, ...owners}..remove(me);
+    return {...all, ...owners, me};
   }
 
   // ---------------------------------------------------------------- vectors
 
-  /// author -> highest seq such that every seq 1..n is held.
+  /// author/device -> highest seq such that every seq 1..n is held.
   Future<Map<String, int>> vector(String building) async {
     final rows = await store.query(
-        'SELECT author, seq FROM events WHERE building_id = ? ORDER BY author, seq',
+        'SELECT author, device, seq FROM events WHERE building_id = ? ORDER BY author, device, seq',
         [building]);
     final out = <String, int>{};
     for (final r in rows) {
-      final a = r['author'] as String;
+      final a = '${r['author']}/${r['device'] ?? ''}';
       final s = r['seq'] as int;
       final have = out[a] ?? 0;
       if (s == have + 1) out[a] = s;
@@ -108,9 +109,8 @@ class SyncEngine {
     };
   }
 
-  /// Starts a sync round with [peer].
+  /// Starts a sync round with [peer] (our own npub: our other devices).
   Future<void> syncWith(String peer) async {
-    if (peer == me) return;
     await _send(peer, await _hello(peer, first: true));
   }
 
@@ -158,11 +158,12 @@ class SyncEngine {
 
   Future<void> _sendMissing(String to, String building, Map<String, int> theirs) async {
     final rows = await store.query(
-        "SELECT author, seq, json FROM events WHERE building_id = ? AND status = 'applied' ORDER BY hlc",
+        "SELECT author, device, seq, json FROM events WHERE building_id = ? AND status = 'applied' ORDER BY hlc",
         [building]);
     final out = <String>[];
     for (final r in rows) {
-      if ((r['seq'] as int) > (theirs[r['author']] ?? 0)) out.add(r['json'] as String);
+      final lane = '${r['author']}/${r['device'] ?? ''}';
+      if ((r['seq'] as int) > (theirs[lane] ?? 0)) out.add(r['json'] as String);
     }
     await _sendEvents(to, out);
   }

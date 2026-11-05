@@ -77,6 +77,22 @@ class MainActivity : FlutterActivity() {
                     result.success(true)
                 }
                 "running" -> result.success(SyncService.running)
+                // Opens the system installer on an APK downloaded to the cache
+                // (res/xml/file_paths.xml); the user confirms the update there.
+                "installApk" -> {
+                    try {
+                        val f = java.io.File(call.argument<String>("path")!!)
+                        val uri = androidx.core.content.FileProvider.getUriForFile(
+                            ctx, "${ctx.packageName}.fileprovider", f)
+                        val i = Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(uri, "application/vnd.android.package-archive")
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        ctx.startActivity(i)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("install", e.message, null)
+                    }
+                }
                 "requestNotifications" -> {
                     if (Build.VERSION.SDK_INT >= 33 &&
                         checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=

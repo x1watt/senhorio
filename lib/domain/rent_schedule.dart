@@ -35,6 +35,27 @@ class LeaseStatus {
   }
 }
 
+/// Kinds of money a tenant hands over besides rent.
+const paymentKinds = ['rent', 'deposit', 'provision', 'deposit_return', 'deposit_deduction'];
+
+bool isRentPayment(DbRow p) => p['kind'] == null || p['kind'] == 'rent';
+
+/// What the landlord still holds of the tenant's deposit (caução) and
+/// provisions: paid in, minus what was returned or kept for repairs.
+int depositHeld(Iterable<DbRow> payments) {
+  var held = 0;
+  for (final p in payments) {
+    final amt = (p['amount_cents'] as int?) ?? 0;
+    switch (p['kind']) {
+      case 'deposit' || 'provision':
+        held += amt;
+      case 'deposit_return' || 'deposit_deduction':
+        held -= amt;
+    }
+  }
+  return held;
+}
+
 Recurrence recurrenceOfLease(DbRow lease) => Recurrence(
       frequencyOf(lease['frequency']),
       (lease['due_day'] as int?) ?? 1,
@@ -55,6 +76,7 @@ LeaseStatus leaseStatus(DbRow lease, List<DbRow> payments, DateTime today) {
   var loose = 0;
   final periods = {for (final d in dates) isoDate(d)};
   for (final p in payments) {
+    if (!isRentPayment(p)) continue;
     final amt = (p['amount_cents'] as int?) ?? 0;
     final per = p['period'] as String?;
     if (per != null && periods.contains(per)) {

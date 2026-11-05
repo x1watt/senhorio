@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/common.dart';
@@ -6,6 +7,7 @@ import 'dashboard.dart';
 import 'expenses.dart';
 import 'settings.dart';
 import 'stats.dart';
+import 'update_dialog.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -15,6 +17,22 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Once a day, offer the latest GitHub release (no-op on the web).
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final app = context.app;
+        final last = int.tryParse(await app.store.getMeta('update_check') ?? '') ?? 0;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        if (now - last < const Duration(hours: 20).inMilliseconds) return;
+        await app.store.exec('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['update_check', '$now']);
+        if (mounted) await checkForUpdates(context);
+      });
+    }
+  }
 
   static const _pages = [
     DashboardScreen(),

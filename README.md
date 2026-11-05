@@ -8,7 +8,12 @@ Android and desktop (Linux, Windows, macOS).
 - **Tenants and leases:** the rent amount, frequency
   (weekly/monthly/quarterly/yearly), due day, grace days and deposit.
   The app shows **who is late** and by how much, and accepts partial
-  payments.
+  payments. Deposits (caução) and provisions are tracked apart from rent
+  and returned or kept for repairs when the tenant leaves. Each room shows
+  its occupation history; the tenant's phones and email are one tap away,
+  and their identification documents can be attached.
+- A building opens with an animated board of its rooms: green when the
+  rent is in order, red when overdue, grey when empty.
 - **Expenses** with **receipt photos or PDFs**, per building, apartment or
   room. There are 13 default categories (water, electricity, gas, internet,
   condo fees, material, repairs, cleaning, food, furniture, insurance,
@@ -34,7 +39,11 @@ Android and desktop (Linux, Windows, macOS).
     and by whom, with one-tap restore.
   - An automatic checkpoint is taken daily.
   - The backup export copies the whole history.
-- Portuguese and English.
+- Portuguese and English; dark (black) theme.
+- **Updates:** the app checks GitHub releases once a day; on Android it
+  downloads the new APK and opens the installer.
+- One identity (nsec) can be restored on another device, and several
+  devices of the same person sync with each other like members do.
 - Emails and documents: the structure is in place (`documents` table);
   import comes later.
 

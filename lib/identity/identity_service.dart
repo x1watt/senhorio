@@ -103,6 +103,7 @@ String shortNpub(String pubkeyHex) {
 class IdentityService {
   static const _kNsec = 'senhorio_nsec';
   static const _kDbPassword = 'senhorio_db_password';
+  static const _kDevice = 'senhorio_device';
   final KeyStore store;
   late Identity identity;
 
@@ -126,6 +127,17 @@ class IdentityService {
     await store.write(_kNsec, id.nsec);
     identity = id;
     return id;
+  }
+
+  /// Id of this device (random, kept with the keys): the same npub on
+  /// several devices keeps one event sequence per device.
+  Future<String> deviceId() async {
+    var d = await store.read(_kDevice);
+    if (d == null || d.length != 16) {
+      d = hexOf(randomBytes(8));
+      await store.write(_kDevice, d);
+    }
+    return d;
   }
 
   /// Password of the local archive (random, kept in the keystore).

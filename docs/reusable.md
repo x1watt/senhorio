@@ -41,12 +41,11 @@ something reusable.
 | `editEntity` (shows the form, sends only changed fields as a signed upsert) | `lib/ui/forms.dart` | Editing any synced entity |
 | `LiveFuture` (reloads when the ledger revision changes) | `lib/ui/widgets/common.dart` | Any screen showing ledger data |
 | `confirm`, `guarded`, `EmptyState`, `SectionHeader`, `CategoryAvatar`, `context.l / app / money / toast` | `lib/ui/widgets/common.dart` | Common dialogs and widgets |
-| `AttachmentThumb` + `shrinkImage` (JPEG ≤1600 px in an isolate) | `lib/ui/screens/expenses.dart` | Showing and storing photos and PDFs by SHA-256 |
+| `AttachmentList` / `AttachmentThumb` / `pickAndStoreAttachment` / `shrinkImage` (camera, gallery, file; JPEG ≤1600 px; stored by SHA-256) | `lib/ui/widgets/attachments.dart` | Any entity with photos or PDFs (receipts, ID documents) |
+| `RoomMosaic` (coloured tiles, staggered grow-in, pulsing alert) | `lib/ui/widgets/room_mosaic.dart` | Any at-a-glance status board |
+| `UpdateService` + `checkForUpdates` dialog + `installApk` channel (GitHub latest release → download → system installer) | `lib/platform/updates.dart`, `lib/ui/screens/update_dialog.dart`, `MainActivity.kt` | Self-updating Android apps published on GitHub releases |
+| `depositHeld`, `isRentPayment`, `paymentKinds` | `lib/domain/rent_schedule.dart` | Deposits/provisions kept apart from rent |
 
 ## Candidates (not yet extracted)
-
-- `AttachmentThumb` and the photo picking in `ExpenseForm` could move to
-  `lib/ui/widgets/attachments.dart` once a second screen needs receipts
-  (for example, the email/documents archive).
 - The building/expense "filter chips" row appears in Expenses and Stats;
   extract a `BuildingFilter` widget if a third screen uses it.

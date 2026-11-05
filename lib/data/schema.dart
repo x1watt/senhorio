@@ -38,8 +38,11 @@ const entityFields = <String, Map<String, String>>{
   'tenants': {
     'name': 'TEXT',
     'phone': 'TEXT',
+    'phone2': 'TEXT',
     'email': 'TEXT',
+    'emergency_contact': 'TEXT', // name and phone of someone to call
     'tax_id': 'TEXT',
+    'id_documents': 'TEXT', // JSON list of sha256 (table attachments)
     'notes': 'TEXT',
   },
   'leases': {
@@ -56,6 +59,9 @@ const entityFields = <String, Map<String, String>>{
   },
   'payments': {
     'lease_id': 'TEXT',
+    // rent | deposit (caução) | provision (provisão) | deposit_return |
+    // deposit_deduction (kept for repairs); null = rent
+    'kind': 'TEXT',
     'period': 'TEXT', // due date of the period this pays (yyyy-mm-dd)
     'amount_cents': 'INTEGER',
     'paid_on': 'TEXT',
@@ -117,7 +123,7 @@ const globalBuilding = '';
 const localTables = <String, String>{
   // Every signed event, accepted or waiting for its author to be authorised.
   'events': '''CREATE TABLE IF NOT EXISTS events (
-    id TEXT PRIMARY KEY, author TEXT, building_id TEXT, seq INTEGER,
+    id TEXT PRIMARY KEY, author TEXT, device TEXT, building_id TEXT, seq INTEGER,
     hlc TEXT, entity TEXT, entity_id TEXT, json TEXT,
     status TEXT, received_at INTEGER)''',
   'attachments': '''CREATE TABLE IF NOT EXISTS attachments (
@@ -135,7 +141,12 @@ String createEntityTableSql(String table) {
   return 'CREATE TABLE IF NOT EXISTS $table ($body)';
 }
 
+/// Columns added to local tables after they were created.
+const localTableAdditions = <String, Map<String, String>>{
+  'events': {'device': 'TEXT'},
+};
+
 const entityIndexes = [
-  'CREATE INDEX IF NOT EXISTS events_author ON events (building_id, author, seq)',
+  'CREATE INDEX IF NOT EXISTS events_author ON events (building_id, author, device, seq)',
   'CREATE INDEX IF NOT EXISTS events_status ON events (status)',
 ];

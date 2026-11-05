@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/dates.dart';
 import '../data/zx_store.dart';
 import '../domain/recurrence.dart';
+import '../domain/rent_schedule.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'widgets/common.dart';
 import 'widgets/entity_form.dart';
@@ -41,7 +42,9 @@ List<FieldSpec> roomFields(AppLocalizations l, List<DbRow> apartments) => [
 List<FieldSpec> tenantFields(AppLocalizations l) => [
       FieldSpec('name', l.name, required: true),
       FieldSpec('phone', l.phone),
+      FieldSpec('phone2', l.phone2),
       FieldSpec('email', l.email),
+      FieldSpec('emergency_contact', l.emergencyContact, hint: l.emergencyContactHint),
       FieldSpec('tax_id', l.taxId),
       FieldSpec('notes', l.notes, type: FieldType.multiline),
     ];
@@ -61,7 +64,9 @@ List<FieldSpec> leaseFields(AppLocalizations l, List<DbRow> tenants) => [
     ];
 
 List<FieldSpec> paymentFields(AppLocalizations l, Map<String, String> periods) => [
-      FieldSpec('period', l.period, type: FieldType.choice, options: periods, required: true),
+      FieldSpec('kind', l.paymentKindLabel, type: FieldType.choice,
+          options: {for (final k in paymentKinds) k: l.paymentKind(k)}, required: true),
+      FieldSpec('period', l.period, type: FieldType.choice, options: periods, hint: l.periodHint),
       FieldSpec('amount_cents', l.amount, type: FieldType.money, required: true),
       FieldSpec('paid_on', l.paidOn, type: FieldType.date, required: true),
       FieldSpec('method', l.method, hint: l.methodHint),

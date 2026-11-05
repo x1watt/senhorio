@@ -13,8 +13,11 @@ user's nsec:
 
 - `b` is the building the change belongs to (`""` for global data:
   categories).
-- `seq` counts per (author, building), starting at 1, so a peer can say
-  exactly what it holds.
+- `d` is the device that wrote the event (random id kept with the keys).
+  One npub may run on several devices: a restored nsec on a new phone, a
+  laptop and a phone. Each device keeps its own sequence.
+- `seq` counts per (author, device, building), starting at 1, so a peer
+  can say exactly what it holds. Sync vectors are keyed `author/device`.
 - `hlc` is a hybrid logical clock. Each field keeps the HLC of its last
   write (`field_hlc`), and the higher HLC wins. Two people editing
   different fields of the same row both keep their change.
@@ -63,13 +66,15 @@ generation with now (`AS OF GENERATION`).
 
 | `t` | Fields | Meaning |
 |---|---|---|
-| `hello` | `first`, `v: {building: {author: seq}}` | What I hold, as the highest seq per author with no gaps. The receiver sends what is missing for buildings the sender may see. If `first` is set, it also answers with its own hello. |
+| `hello` | `first`, `v: {building: {"author/device": seq}}` | What I hold, as the highest seq per author with no gaps. The receiver sends what is missing for buildings the sender may see. If `first` is set, it also answers with its own hello. |
 | `events` | `e: [event…]` | Up to 48 KB of signed events. |
 | `need` | `sha: [...]` | Receipts referenced by expenses but not held. |
 | `blob` | `sha, mime, data` | One receipt (base64). The receiver checks the SHA-256. |
 
 When the owner adds a member, the owner sends that member's device the
-building's whole history. Changes made on one device are pushed straight
+building's whole history. A user's own other devices are partners too:
+a device that just imported the nsec says hello to every node announcing
+the same npub and receives everything that npub may see. Changes made on one device are pushed straight
 away to every partner device that is online. Partners also say hello
 every 3 minutes and whenever one is discovered.
 

@@ -2,7 +2,7 @@ name: senhorio
 description: "Senhorio — shared rent and expense accounting for buildings, synced peer-to-peer over Reticulum."
 publish_to: 'none'
 
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.10.0
@@ -29,11 +29,24 @@ dependencies:
   fl_chart: ^0.69.0
   qr_flutter: ^4.1.0
   crypto: ^3.0.3
+  url_launcher: ^6.3.0                   # tel:/mailto: links for tenant contacts
+  http: ^1.2.0                           # GitHub releases (auto-update)
+  package_info_plus: ^8.0.0              # installed version for the update check
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  web:
+    generate: true
+  image_path: icons/senhorio.png
+  adaptive_icon_background: "#0B0F0E"
+  adaptive_icon_foreground: icons/senhorio_fg.png
 
 flutter:
   uses-material-design: true

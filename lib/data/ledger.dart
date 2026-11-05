@@ -25,13 +25,17 @@ class LedgerEvent {
   final String building;
   final int seq;
   final String hlc;
+  final String device; // the author's device ('' for events before devices)
   final String entity;
   final String entityId;
   final String op; // upsert | delete
   final Map<String, Object?> fields;
 
-  LedgerEvent._(this.raw, this.building, this.seq, this.hlc, this.entity,
-      this.entityId, this.op, this.fields);
+  LedgerEvent._(this.raw, this.building, this.seq, this.hlc, this.device,
+      this.entity, this.entityId, this.op, this.fields);
+
+  /// Key of the (author, device) sequence in sync vectors.
+  String get lane => '$author/$device';
 
   String get id => raw.id!;
   String get author => raw.pubkey;
@@ -57,6 +61,7 @@ class LedgerEvent {
         _tag(e, 'b') ?? globalBuilding,
         int.parse(_tag(e, 'seq') ?? '0'),
         _tag(e, 'hlc') ?? '',
+        _tag(e, 'd') ?? '',
         entity,
         c['id'] as String,
         op,
@@ -72,6 +77,10 @@ class LedgerEvent {
 class Ledger extends ChangeNotifier {
   final ZxStore store;
   Identity identity;
+
+  /// This device, so several devices can share one npub: each keeps its own
+  /// sequence of events (tag `d`) and its own HLC node id.
+  final String device;
   final HlcClock clock;
 
   /// Bumped after every committed change; screens rebuild on it.
@@ -84,8 +93,11 @@ class Ledger extends ChangeNotifier {
   /// Called with the events created locally (the sync engine pushes them).
   void Function(List<LedgerEvent>)? onLocalEvents;
 
-  Ledger(this.store, this.identity)
-      : clock = HlcClock(identity.pubkey.substring(0, 8));
+  Ledger(this.store, this.identity, {String? device})
+      : device = device ?? newId().substring(0, 16),
+        clock = HlcClock(_nodeId(device ?? identity.pubkey));
+
+  static String _nodeId(String s) => s.length > 8 ? s.substring(0, 8) : s;
 
   String get me => identity.pubkey;
 
@@ -129,8 +141,8 @@ class Ledger extends ChangeNotifier {
     await store.transaction(() async {
       for (final c in changes) {
         final seq = ((await store.scalar(
-                    'SELECT max(seq) FROM events WHERE author = ? AND building_id = ?',
-                    [me, c.building]) as int?) ??
+                    'SELECT max(seq) FROM events WHERE author = ? AND device = ? AND building_id = ?',
+                    [me, device, c.building]) as int?) ??
                 0) +
             1;
         final hlc = clock.now().toString();
@@ -142,6 +154,7 @@ class Ledger extends ChangeNotifier {
             ['b', c.building],
             ['seq', '$seq'],
             ['hlc', hlc],
+            ['d', device],
             ['e', c.entity],
           ],
           content: jsonEncode(
@@ -216,10 +229,10 @@ class Ledger extends ChangeNotifier {
           'UPDATE events SET status = ? WHERE id = ?', [status.name, e.id]);
     } else {
       await store.db.execute(
-          'INSERT INTO events (id, author, building_id, seq, hlc, entity, entity_id, json, status, received_at) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO events (id, author, device, building_id, seq, hlc, entity, entity_id, json, status, received_at) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
-            e.id, e.author, e.building, e.seq, e.hlc, e.entity, e.entityId,
+            e.id, e.author, e.device, e.building, e.seq, e.hlc, e.entity, e.entityId,
             jsonEncode(e.raw.toJson()), status.name,
             DateTime.now().millisecondsSinceEpoch,
           ]);

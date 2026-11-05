@@ -37,7 +37,7 @@ void main() {
     final (sb, lb, yb) = await peer('b', bob);
 
     expect(await waitFor(() async =>
-        ya.node!.peers.containsKey(bob.pubkey) && yb.node!.peers.containsKey(alice.pubkey)), isTrue,
+        ya.node!.knows(bob.pubkey) && yb.node!.knows(alice.pubkey)), isTrue,
         reason: 'nodes did not hear each other');
 
     final b = await la.createBuilding({'name': 'Rua RNS'});

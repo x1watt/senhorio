@@ -613,4 +613,94 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncInBackgroundHelp =>
       'Shows a notification while active, so changes arrive with the app closed.';
+
+  @override
+  String roomsLate(int n) {
+    return '$n late';
+  }
+
+  @override
+  String roomsOk(int n) {
+    return '$n up to date';
+  }
+
+  @override
+  String roomsEmpty(int n) {
+    return '$n empty';
+  }
+
+  @override
+  String get occupancyHistory => 'Occupancy history';
+
+  @override
+  String get today => 'today';
+
+  @override
+  String get editTenant => 'Edit tenant';
+
+  @override
+  String get idDocuments => 'Identification documents';
+
+  @override
+  String get depositHeld => 'Deposit held';
+
+  @override
+  String get registerDeposit => 'Register deposit';
+
+  @override
+  String get settleDeposit => 'Return / deduct';
+
+  @override
+  String get paymentKindLabel => 'Type';
+
+  @override
+  String paymentKind(String k) {
+    String _temp0 = intl.Intl.selectLogic(k, {
+      'rent': 'Rent',
+      'deposit': 'Deposit (caução)',
+      'provision': 'Provision',
+      'deposit_return': 'Deposit returned',
+      'deposit_deduction': 'Deposit kept for repairs',
+      'other': '$k',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get periodHint => 'Rent only';
+
+  @override
+  String get phone2 => 'Second phone';
+
+  @override
+  String get emergencyContact => 'Emergency contact';
+
+  @override
+  String get emergencyContactHint => 'Name and phone';
+
+  @override
+  String get myOtherDevice => 'My other device';
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String get installedVersion => 'Installed version';
+
+  @override
+  String get upToDateVersion => 'You have the latest version';
+
+  @override
+  String updateAvailable(String v) {
+    return 'Version $v is available';
+  }
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get openReleasePage => 'Release page';
+
+  @override
+  String get downloadAndInstall => 'Download and install';
 }

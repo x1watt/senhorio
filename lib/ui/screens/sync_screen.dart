@@ -84,8 +84,8 @@ class SyncScreen extends StatelessWidget {
               for (final p in node.peers.values)
                 ListTile(
                   leading: Icon(sync.partners.contains(p.pubkey) ? Icons.handshake : Icons.person_outline),
-                  title: Text(shortNpub(p.pubkey)),
-                  subtitle: Text('${p.via} · ${p.lastSeen.toString().substring(11, 19)}'),
+                  title: Text(p.pubkey == context.app.identity.pubkey ? l.myOtherDevice : shortNpub(p.pubkey)),
+                  subtitle: Text('${p.identity.hexHash.substring(0, 12)} · ${p.via} · ${p.lastSeen.toString().substring(11, 19)}'),
                   trailing: sync.partners.contains(p.pubkey)
                       ? IconButton(icon: const Icon(Icons.sync), onPressed: () => sync.engine.syncWith(p.pubkey))
                       : null,

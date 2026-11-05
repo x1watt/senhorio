@@ -38,12 +38,14 @@ class ZxStore {
     ];
     // Columns added to an entity after its table was created.
     final alters = <String>[];
-    for (final t in entityFields.keys) {
+    for (final t in [...entityFields.keys, ...localTableAdditions.keys]) {
       if (!existing.contains(t)) continue;
       final cols = (await db.execute('PRAGMA table_info($t)')).rows
           .map((r) => r[1] as String)
           .toSet();
-      final want = {...syncColumns, ...entityFields[t]!};
+      final want = entityFields.containsKey(t)
+          ? {...syncColumns, ...entityFields[t]!}
+          : localTableAdditions[t]!;
       for (final c in want.entries) {
         if (!cols.contains(c.key)) {
           alters.add('ALTER TABLE $t ADD COLUMN ${c.key} ${c.value}');

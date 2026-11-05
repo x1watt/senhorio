@@ -54,7 +54,11 @@ class RnsNode extends ChangeNotifier {
   RnsLanInterface? _lan;
   Timer? _tick;
   DateTime _lastAnnounce = DateTime.fromMillisecondsSinceEpoch(0);
-  final peers = <String, PeerInfo>{}; // pubkey -> peer
+  /// Known nodes by "pubkey/rnsHash": one npub may run on several devices.
+  final peers = <String, PeerInfo>{};
+
+  Iterable<PeerInfo> peersOf(String pubkey) => peers.values.where((p) => p.pubkey == pubkey);
+  bool knows(String pubkey) => peers.values.any((p) => p.pubkey == pubkey);
   final _byLxmf = <String, String>{}; // lxmf dest hex -> pubkey
   final logLines = <String>[];
   bool running = false;
@@ -256,10 +260,11 @@ class RnsNode extends ChangeNotifier {
     }
     if (!ok) return;
     final lx = RnsDestination.hash(ann.identity, kLxmfApp, kLxmfDeliveryAspects);
-    final known = peers[pk];
-    peers[pk] = PeerInfo(pk, ann.identity, lx, DateTime.now(), via);
+    final key = '$pk/${ann.identity.hexHash}';
+    final known = peers[key];
+    peers[key] = PeerInfo(pk, ann.identity, lx, DateTime.now(), via);
     _byLxmf[hexOf(lx)] = pk;
-    if (known == null || !_eq(known.identity.hash, ann.identity.hash)) {
+    if (known == null) {
       log('peer ${shortNpub(pk)} via $via');
       // A newcomer missed our last announce: answer so it learns us now.
       _reannounceSoon();
@@ -270,7 +275,7 @@ class RnsNode extends ChangeNotifier {
 
   RnsIdentity? _identityForLxmf(Uint8List h) {
     final pk = _byLxmf[hexOf(h)];
-    return pk == null ? null : peers[pk]?.identity;
+    return pk == null ? null : peers.values.where((p) => p.pubkey == pk && hexOf(p.lxmfDest) == hexOf(h)).firstOrNull?.identity;
   }
 
   // ---------------------------------------------------------------- traffic
@@ -310,20 +315,26 @@ class RnsNode extends ChangeNotifier {
     }
   }
 
-  /// Sends [msg] to the peer with NOSTR [pubkey] (encrypted LXMF over a link).
+  /// Sends [msg] to every device of NOSTR [pubkey] (encrypted LXMF over a
+  /// link); true when at least one confirmed.
   Future<bool> send(String pubkey, Map<String, Object?> msg) async {
-    final p = peers[pubkey];
     final id = _id;
-    if (p == null || id == null || _lxmf == null) return false;
-    final m = await LxmfMessage.create(
-      destinationHash: p.lxmfDest,
-      source: id,
-      title: kSyncTitle,
-      content: jsonEncode(msg),
-    );
-    final r = await _lxmf!.deliver(m, timeout: const Duration(seconds: 60));
-    final ok = r == LxmfDelivery.confirmed;
-    if (!ok) log('send to ${shortNpub(pubkey)}: ${r.name}');
+    if (id == null || _lxmf == null) return false;
+    var ok = false;
+    for (final p in peersOf(pubkey).toList()) {
+      final m = await LxmfMessage.create(
+        destinationHash: p.lxmfDest,
+        source: id,
+        title: kSyncTitle,
+        content: jsonEncode(msg),
+      );
+      final r = await _lxmf!.deliver(m, timeout: const Duration(seconds: 60));
+      if (r == LxmfDelivery.confirmed) {
+        ok = true;
+      } else {
+        log('send to ${shortNpub(pubkey)} (${p.identity.hexHash.substring(0, 8)}): ${r.name}');
+      }
+    }
     return ok;
   }
 

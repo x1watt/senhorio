@@ -139,7 +139,7 @@ class SyncService extends ChangeNotifier {
     await n.announce();
     partners = await engine.partners();
     for (final pk in partners) {
-      if (!n.peers.containsKey(pk)) continue;
+      if (!n.knows(pk)) continue;
       _lastHello[pk] = DateTime.now();
       await engine.syncWith(pk);
     }

@@ -48,7 +48,8 @@ Future<void> seedDemoData(Ledger ledger, Checkpoints checkpoints) async {
     add('rooms', {'apartment_id': a2, 'name': 'Quarto D', 'area_m2': 11.0, 'available': 1}),
   ];
   final tenants = [
-    add('tenants', {'name': 'Ana Ribeiro', 'phone': '912 345 678', 'email': 'ana@example.com'}),
+    add('tenants', {'name': 'Ana Ribeiro', 'phone': '912 345 678', 'email': 'ana@example.com',
+        'emergency_contact': 'Rui Ribeiro (pai) 917 000 111', 'tax_id': '123456789'}),
     add('tenants', {'name': 'João Costa', 'phone': '934 111 222'}),
     add('tenants', {'name': 'Lena Müller', 'email': 'lena@example.com', 'notes': 'Erasmus'}),
     add('tenants', {'name': 'Pedro Santos', 'phone': '965 000 333'}),
@@ -70,6 +71,10 @@ Future<void> seedDemoData(Ledger ledger, Checkpoints checkpoints) async {
       'start_date': isoDate(monthsAgo(start, 1)),
       'grace_days': 5,
       'deposit_cents': rent,
+    });
+    add('payments', {
+      'lease_id': lease, 'kind': 'deposit', 'amount_cents': rent,
+      'paid_on': isoDate(monthsAgo(start, 1)), 'method': 'Transferência',
     });
     for (var m = 0; m < paid; m++) {
       final due = monthsAgo(start - m, 8);
