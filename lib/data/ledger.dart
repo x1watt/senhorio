@@ -77,6 +77,10 @@ class Ledger extends ChangeNotifier {
   /// Bumped after every committed change; screens rebuild on it.
   int revision = 0;
 
+  /// Sign local events (always, except in the browser preview: it never
+  /// syncs, and secp256k1 in JavaScript takes seconds per signature).
+  bool signLocal = true;
+
   /// Called with the events created locally (the sync engine pushes them).
   void Function(List<LedgerEvent>)? onLocalEvents;
 
@@ -143,7 +147,11 @@ class Ledger extends ChangeNotifier {
           content: jsonEncode(
               {'entity': c.entity, 'id': c.id, 'op': c.op, 'fields': c.fields}),
         );
-        identity.sign(e);
+        if (signLocal) {
+          identity.sign(e);
+        } else {
+          e.calculateId();
+        }
         final le = LedgerEvent.parse(e)!;
         final st = await _apply(le);
         if (st == EventStatus.rejected) {

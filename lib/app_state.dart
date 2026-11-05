@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -10,6 +11,7 @@ import 'data/ledger.dart';
 import 'data/queries.dart';
 import 'data/zx_store.dart';
 import 'domain/category_learner.dart';
+import 'demo/demo_data.dart';
 import 'domain/checkpoints.dart';
 import 'identity/identity_service.dart';
 import 'platform/background.dart';
@@ -33,17 +35,24 @@ class AppState extends ChangeNotifier {
   Identity get identity => identityService.identity;
 
   static Future<AppState> boot({String? dir, KeyStore? keys, bool network = true}) async {
+    // The browser preview: data in memory, no Reticulum (no sockets there).
+    if (kIsWeb) {
+      dir = 'web';
+      keys ??= MemoryKeyStore();
+      network = false;
+    }
     final base = dir ?? (await getApplicationSupportDirectory()).path;
-    await Directory(base).create(recursive: true);
+    if (!kIsWeb) await Directory(base).create(recursive: true);
     final ids = IdentityService(keys ?? SecureKeyStore(base));
     final id = await ids.load();
     final store =
         await ZxStore.open('$base/senhorio.zx', password: await ids.dbPassword());
-    final ledger = Ledger(store, id);
+    final ledger = Ledger(store, id)..signLocal = !kIsWeb;
     await ledger.init();
     final s = AppState._(base, ids, store, ledger);
     final lang = await store.getMeta('locale');
     if (lang != null && lang.isNotEmpty) s.locale = Locale(lang);
+    if (kIsWeb && (await s.q.buildings()).isEmpty) await seedDemoData(s.ledger, s.checkpoints);
     await s.checkpoints.autoDaily(id.pubkey);
     if (network) {
       BackgroundSync.init(s.sync.nativeTick);
@@ -54,7 +63,7 @@ class AppState extends ChangeNotifier {
   }
 
   (String, String) _notificationText() {
-    final lang = locale?.languageCode ?? Platform.localeName.split(RegExp('[_-]')).first;
+    final lang = locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode;
     return lang == 'pt'
         ? ('Senhorio', 'Sincronização ativa em segundo plano')
         : ('Senhorio', 'Syncing in the background');

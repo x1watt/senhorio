@@ -3,12 +3,13 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class BackgroundSync {
   static const _ch = MethodChannel('com.x1watt.senhorio/bg');
 
-  static bool get supported => Platform.isAndroid;
+  static bool get supported => !kIsWeb && Platform.isAndroid;
 
   /// [onTick] runs about once a minute while the service is up (native
   /// heartbeat: Dart timers are throttled in the background).

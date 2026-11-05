@@ -4,17 +4,14 @@
 
 import 'dart:async';
 
-import 'package:zx/zx.dart';
-// ZxDbStoreOptions is not exported by package:zx/zx.dart.
-// ignore: implementation_imports
-import 'package:zx/src/db/engine/store.dart' show ZxDbStoreOptions;
-
 import 'schema.dart';
+import 'sql_backend.dart';
+import 'sql_backend_native.dart' if (dart.library.js_interop) 'sql_backend_web.dart';
 
 typedef DbRow = Map<String, Object?>;
 
 class ZxStore {
-  final ZxDatabaseAsync db;
+  final SqlBackend db;
   final String path;
   Future<void> _tail = Future.value();
 
@@ -22,23 +19,15 @@ class ZxStore {
 
   /// Opens (or creates) the archive at [path] and runs the migrations.
   static Future<ZxStore> open(String path, {String? password}) async {
-    final options = ZxDbStoreOptions(
-      // phone-sized caches; the data is small
-      pageCacheBytes: 16 << 20,
-      blockCacheBytes: 8 << 20,
-      compression: 'balanced',
-      threads: 2,
-    );
-    final db = await ZxDatabaseAsync.open(path,
-        password: password, create: true, options: options);
+    final db = await openBackend(path, password: password);
     final s = ZxStore._(db, path);
     await s._migrate();
     return s;
   }
 
   Future<void> _migrate() async {
-    final existing = (await db.select(
-            "SELECT name FROM sqlite_schema WHERE type = 'table'"))
+    final existing = (await db.execute(
+            "SELECT name FROM sqlite_schema WHERE type = 'table'")).rows
         .map((r) => r[0] as String)
         .toSet();
     final missing = [
@@ -51,7 +40,7 @@ class ZxStore {
     final alters = <String>[];
     for (final t in entityFields.keys) {
       if (!existing.contains(t)) continue;
-      final cols = (await db.select('PRAGMA table_info($t)'))
+      final cols = (await db.execute('PRAGMA table_info($t)')).rows
           .map((r) => r[1] as String)
           .toSet();
       final want = {...syncColumns, ...entityFields[t]!};
@@ -114,10 +103,7 @@ class ZxStore {
   Future<void> putMetaRaw(String key, String value) => db.execute(
       'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', [key, value]);
 
-  Future<int> lastGeneration() async {
-    final g = await db.generations();
-    return g.isEmpty ? 0 : g.last.generation;
-  }
+  Future<int> lastGeneration() => db.lastGeneration();
 
   Future<void> close() => db.close();
 }

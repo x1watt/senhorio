@@ -20,6 +20,8 @@ something reusable.
 
 | `BackgroundSync` (Dart) + `SyncService.kt` / `MainActivity.kt` (cached engine, foreground service type connectedDevice, native heartbeat `onTick`) | `lib/platform/background.dart`, `android/app/src/main/kotlin/com/x1watt/senhorio/` | Keeping any Dart networking alive on Android with the app closed |
 
+| `SqlBackend` + `openBackend` (conditional import: `.zx` file natively, ZX SQL engine in a dart2wasm Web Worker on the web) | `lib/data/sql_backend*.dart`, `web_engine/db_worker.dart`, `tool/build_web.sh` | Running ZX SQL in a Flutter web build (dart2js has no 64-bit ints; the worker does) |
+
 ## Domain helpers
 
 | What | Where | Reuse it for |

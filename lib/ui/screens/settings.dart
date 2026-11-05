@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -54,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(l.comingSoon),
           enabled: false,
         ),
-        ListTile(
+        if (!kIsWeb) ListTile(
           leading: const Icon(Icons.save_alt),
           title: Text(l.exportBackup),
           subtitle: Text(l.exportBackupHelp),

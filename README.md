@@ -47,6 +47,10 @@ On the shared Pi, run builds and tests through `xbuild`.
 - Real-network sync test: set `SENHORIO_HUB=rns.wisco.network:4242`, then
   run `flutter test test/rns_sync_test.dart`
 - Apps: `flutter build linux` or `flutter build apk`
+- Browser preview: `tool/build_web.sh`, then `tool/serve_web.py 8080` and
+  open http://localhost:8080/. The web build keeps its data in memory (the
+  ZX SQL engine runs in a WebAssembly worker), starts with sample data and
+  has no Reticulum sync (browsers have no sockets); it is for trying the UI.
 
 The Android APK is built by GitHub Actions (`.github/workflows/android.yml`)
 on every push to `main` (download it from the run's artifacts) and is

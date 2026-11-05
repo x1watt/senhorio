@@ -263,7 +263,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   @override
   Widget build(BuildContext context) {
     final l = context.l;
-    final isDesktop = !(Platform.isAndroid || Platform.isIOS);
+    final isDesktop = kIsWeb || !(Platform.isAndroid || Platform.isIOS);
     final suggested = _suggestions.map((s) => s.categoryId).toSet();
     return Scaffold(
       appBar: AppBar(
