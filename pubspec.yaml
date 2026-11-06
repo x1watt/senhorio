@@ -2,7 +2,7 @@ name: senhorio
 description: "Senhorio — shared rent and expense accounting for buildings, synced peer-to-peer over Reticulum."
 publish_to: 'none'
 
-version: 0.3.1+4
+version: 0.3.2+5
 
 environment:
   sdk: ^3.10.0

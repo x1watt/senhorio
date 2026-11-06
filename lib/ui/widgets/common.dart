@@ -20,6 +20,8 @@ extension Ctx on BuildContext {
 }
 
 /// Loads [load] again whenever the ledger changes (watches its revision).
+/// While it reloads it keeps showing the previous data, and the widgets
+/// below keep their state (selected tab, scroll position, open tiles).
 class LiveFuture<T> extends StatelessWidget {
   final Future<T> Function(AppState app) load;
   final Widget Function(BuildContext context, T data) builder;
@@ -28,9 +30,9 @@ class LiveFuture<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.read<AppState>();
-    final rev = context.select<Ledger, int>((l) => l.revision);
+    // Rebuilding on a new revision starts a new load.
+    context.select<Ledger, int>((l) => l.revision);
     return FutureBuilder<T>(
-      key: ValueKey(rev),
       future: load(app),
       builder: (context, snap) {
         if (snap.hasError) {
@@ -157,9 +159,8 @@ class StaffOnly extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.read<AppState>();
-    final rev = context.select<Ledger, int>((l) => l.revision);
+    context.select<Ledger, int>((l) => l.revision);
     return FutureBuilder<bool>(
-      key: ValueKey(rev),
       future: app.q.onlyTenant(app.identity.pubkey),
       builder: (context, snap) => snap.data == false ? child : const SizedBox.shrink(),
     );
