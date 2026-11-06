@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -141,8 +140,8 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _restoreBackup(BuildContext context) async {
     final app = context.app;
     final l = context.l;
-    final file = await Backups.pick();
-    if (file == null || !context.mounted) return;
+    final picked = await Backups.pick();
+    if (picked == null || !context.mounted) return;
     final ctrl = TextEditingController();
     final text = await showDialog<String>(
       context: context,
@@ -173,10 +172,10 @@ class SettingsScreen extends StatelessWidget {
       context.toast(l.restoreKeyInvalid);
       return;
     }
-    if (!await confirm(context, l.restoreConfirm(file.split(Platform.pathSeparator).last)) || !context.mounted) return;
+    if (!await confirm(context, l.restoreConfirm(picked.name)) || !context.mounted) return;
     final (nsec, password) = key;
     try {
-      await app.restoreBackup(file, nsec: nsec, password: password);
+      await app.restoreBackup(picked.path, nsec: nsec, password: password);
     } catch (e) {
       if (context.mounted) context.toast(l.restoreFailed);
       return;

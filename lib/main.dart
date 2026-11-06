@@ -33,7 +33,9 @@ class _BootState extends State<_Boot> {
   Widget build(BuildContext context) => FutureBuilder<AppState>(
         future: _boot,
         builder: (context, snap) {
-          if (snap.hasData) return SenhorioApp(state: snap.data!);
+          // A new state (after a restore) gets a fresh tree: no screen keeps data
+          // loaded from the archive it replaced.
+          if (snap.hasData) return SenhorioApp(key: ObjectKey(snap.data), state: snap.data!);
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: senhorioTheme(Brightness.light),

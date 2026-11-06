@@ -44,8 +44,10 @@ class Backups {
     return loc.path;
   }
 
-  /// Lets the user pick a backup file; null when cancelled.
-  static Future<String?> pick() async {
+  /// Lets the user pick a backup file: its path and display name (Android
+  /// hands over a cached copy whose path does not keep the name); null when
+  /// cancelled.
+  static Future<({String path, String name})?> pick() async {
     const group = XTypeGroup(label: 'ZX', extensions: ['zx'], mimeTypes: ['*/*']);
     XFile? f;
     try {
@@ -53,7 +55,7 @@ class Backups {
     } on ArgumentError {
       f = await openFile();
     }
-    return f?.path;
+    return f == null ? null : (path: f.path, name: f.name);
   }
 
   // ------------------------------------------------------------ restore key
