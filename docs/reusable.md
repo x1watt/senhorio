@@ -15,6 +15,9 @@ something reusable.
 | `Checkpoints`: diff of every entity table between a past ZX generation and now, plus restore as a new signed change | `lib/domain/checkpoints.dart` | Audit trails or "what changed since…" in any ZX-backed app |
 | `SyncEngine`: transport-agnostic sync protocol (hello vectors, event batches, blob requests), testable over an in-memory wire | `lib/sync/sync_engine.dart` | Syncing a `Ledger` over anything that can send JSON to a pubkey |
 | `RnsNode`: Reticulum leaf node (all-hub mesh with reconnect, LAN, priority announce names, npub↔RNS binding in announce appData, LXMF send/receive) | `lib/sync/rns_node.dart` | Any app that needs to find peers by npub and send them encrypted messages over Reticulum |
+| `Role` + `RoleRules` (owner/admin/mod/user: `canGrant`, `canManage`, `isStaff`) and `Ledger.roleAt` (role as of an HLC, by folding membership events) | `lib/domain/roles.dart`, `lib/data/ledger.dart` | Role-based permissions in any signed-event ledger, with revocations that keep earlier changes valid |
+| `Invites`: short single-use codes found through a 1-byte announce tag, joined over LXMF (`normalizeInviteCode`, `inviteTag`) | `lib/sync/invites.dart`, `RnsNode.setInviteTags` / `peersWithTag` | Pairing two Reticulum apps with a code read aloud, without exchanging keys first |
+| `TenantScope` + `skip` ranges (`hidden_ranges` counted as held in `SyncEngine.vector`) | `lib/sync/sync_engine.dart` | Partial replication of a sequenced log without gaps that make peers re-ask forever |
 | `KeyStore` / `SecureKeyStore` (OS keystore with a 0600-file fallback) / `MemoryKeyStore` | `lib/identity/identity_service.dart` | Keeping secrets (nsec, DB password, RNS identity) |
 | `Identity`, `parsePubkey`, `shortNpub` | `lib/identity/identity_service.dart` | nsec/npub parsing, signing and display |
 
@@ -40,11 +43,18 @@ something reusable.
 | `FieldSpec` + `EntityForm` / `showEntityForm` (text, money, int, decimal, date, choice, toggle, with validation) | `lib/ui/widgets/entity_form.dart` | Every simple create/edit form: describe its fields, don't write a new form |
 | `editEntity` (shows the form, sends only changed fields as a signed upsert) | `lib/ui/forms.dart` | Editing any synced entity |
 | `LiveFuture` (reloads when the ledger revision changes) | `lib/ui/widgets/common.dart` | Any screen showing ledger data |
-| `confirm`, `guarded`, `EmptyState`, `SectionHeader`, `CategoryAvatar`, `context.l / app / money / toast` | `lib/ui/widgets/common.dart` | Common dialogs and widgets |
+| `confirm`, `guarded`, `EmptyState`, `SectionHeader`, `CategoryAvatar`, `StaffOnly`, `context.l / app / money / toast` | `lib/ui/widgets/common.dart` | Common dialogs and widgets; `StaffOnly` hides write buttons from tenant-only users |
+| `inviteToBuilding` / `showInviteCode` / `OpenInvites` / `joinWithCode` | `lib/ui/screens/invites.dart` | Invite UI: role picker, big code display, open codes list, join with progress |
 | `AttachmentList` / `AttachmentThumb` / `pickAndStoreAttachment` / `shrinkImage` (camera, gallery, file; JPEG ≤1600 px; stored by SHA-256) | `lib/ui/widgets/attachments.dart` | Any entity with photos or PDFs (receipts, ID documents) |
 | `RoomMosaic` (coloured tiles, staggered grow-in, pulsing alert) | `lib/ui/widgets/room_mosaic.dart` | Any at-a-glance status board |
 | `UpdateService` + `checkForUpdates` dialog + `installApk` channel (GitHub latest release → download → system installer) | `lib/platform/updates.dart`, `lib/ui/screens/update_dialog.dart`, `MainActivity.kt` | Self-updating Android apps published on GitHub releases |
 | `depositHeld`, `isRentPayment`, `paymentKinds` | `lib/domain/rent_schedule.dart` | Deposits/provisions kept apart from rent |
+
+## Tests
+
+| What | Where | Reuse it for |
+|---|---|---|
+| `Wire`: in-memory network for `SyncEngine`s (JSON round-trip, `settle()`) | `test/wire.dart` | Any multi-peer sync test |
 
 ## Candidates (not yet extracted)
 - The building/expense "filter chips" row appears in Expenses and Stats;

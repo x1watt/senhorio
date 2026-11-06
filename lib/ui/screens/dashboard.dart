@@ -36,11 +36,11 @@ class DashboardScreen extends StatelessWidget {
     final l = context.l;
     return Scaffold(
       appBar: AppBar(title: Text(l.appTitle)),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: StaffOnly(child: FloatingActionButton.extended(
         icon: const Icon(Icons.receipt_long),
         label: Text(l.newExpense),
         onPressed: () => openExpenseForm(context),
-      ),
+      )),
       body: LiveFuture<_DashData>(
         load: (a) async {
           final now = DateTime.now();

@@ -11,6 +11,7 @@ import 'package:reticulum/reticulum.dart' show NostrEvent;
 
 import '../core/hlc.dart';
 import '../core/ids.dart';
+import '../domain/roles.dart';
 import '../identity/identity_service.dart';
 import 'schema.dart';
 import 'zx_store.dart';
@@ -179,9 +180,13 @@ class Ledger extends ChangeNotifier {
 
   // ---------------------------------------------------------------- remote
 
+  /// (building, entity) of the events the last [ingest] applied.
+  final lastApplied = <(String, String)>{};
+
   /// Verifies and applies events from a peer (one generation per batch).
   /// Returns how many were new.
   Future<int> ingest(List<NostrEvent> events) async {
+    lastApplied.clear();
     final parsed = <LedgerEvent>[];
     for (final e in events) {
       if (e.kind != ledgerEventKind || !e.verify()) continue;
@@ -197,7 +202,10 @@ class Ledger extends ChangeNotifier {
         clock.observe(e.hlc);
         final st = await _apply(e);
         if (st != EventStatus.duplicate) fresh++;
-        if (st == EventStatus.applied) touched.add(e.building);
+        if (st == EventStatus.applied) {
+          touched.add(e.building);
+          lastApplied.add((e.building, e.entity));
+        }
       }
       for (final b in touched) {
         await _retryPending(b);
@@ -246,8 +254,10 @@ class Ledger extends ChangeNotifier {
     if (e.building == globalBuilding) {
       if (e.entity != 'categories') return EventStatus.rejected;
       if (e.author == me) return null;
+      // Shared categories come from the people who manage some building.
       final n = await store.scalar(
-          'SELECT count(*) FROM members WHERE pubkey = ? AND deleted = 0', [e.author]);
+          "SELECT count(*) FROM members WHERE pubkey = ? AND deleted = 0 AND (role IS NULL OR role != 'user')",
+          [e.author]);
       return (n as int) > 0 ? null : EventStatus.pending;
     }
     final b = await store.first(
@@ -264,21 +274,91 @@ class Ledger extends ChangeNotifier {
     if (e.entity == 'buildings' && e.entityId != e.building) {
       return EventStatus.rejected;
     }
-    if (e.entity == 'members' || (e.entity == 'buildings' && e.op == 'delete')) {
-      return e.author == owner ? null : EventStatus.rejected;
+    if (e.entity == 'members') {
+      final shape = await _memberShape(e, owner);
+      if (shape != null) return shape;
     }
     if (e.author == owner) return null;
-    final m = await store.first(
-        'SELECT deleted, updated_hlc FROM members WHERE building_id = ? AND pubkey = ?',
-        [e.building, e.author]);
-    if (m == null) return EventStatus.pending;
-    if (m['deleted'] == 1) {
-      // Changes made before the revocation stay valid.
-      return e.hlc.compareTo(m['updated_hlc'] as String? ?? '') < 0
-          ? null
-          : EventStatus.rejected;
+    final role = await roleAt(e.building, e.author, e.hlc);
+    if (role == null) return EventStatus.pending;
+    if (role == _revoked) return EventStatus.rejected;
+    final r = roleOf(role) ?? Role.mod;
+    if (e.entity == 'members') {
+      final target = await store.first(
+          'SELECT role, deleted FROM members WHERE id = ?', [e.entityId]);
+      final targetRole =
+          target == null || target['deleted'] == 1 ? null : roleOf(target['role']);
+      final to = e.op == 'delete' ? null : roleOf(e.fields['role']);
+      if (target == null && to == null) return EventStatus.rejected;
+      if (target != null && target['deleted'] == 1 && e.fields['deleted'] == 0 &&
+          to == null) {
+        return EventStatus.rejected; // re-adding needs an explicit role
+      }
+      return r.canManage(targetRole, to) ? null : EventStatus.rejected;
     }
+    if (e.entity == 'buildings' && e.op == 'delete') {
+      return r.canDeleteBuilding ? null : EventStatus.rejected;
+    }
+    return r.canWrite(e.entity) ? null : EventStatus.rejected;
+  }
+
+  static const _revoked = '-';
+
+  /// Checks that a `members` event targets row `building:pubkey` and does
+  /// not change its pubkey; rejected otherwise.
+  Future<EventStatus?> _memberShape(LedgerEvent e, String? owner) async {
+    final pk = e.fields['pubkey'];
+    if (pk != null && e.entityId != '${e.building}:$pk') return EventStatus.rejected;
+    if (!e.entityId.startsWith('${e.building}:')) return EventStatus.rejected;
+    final target = e.entityId.substring(e.building.length + 1);
+    if (target == owner && e.author != owner) return EventStatus.rejected;
+    if (e.fields['role'] == 'owner' && target != owner) return EventStatus.rejected;
     return null;
+  }
+
+  /// The role [pubkey] had in [building] at [hlc]: folds the membership's
+  /// applied events up to [hlc], so changes made before a revocation or a
+  /// demotion stay valid. Returns null when not a member (yet), or
+  /// [_revoked]. The owner's role is 'owner'.
+  Future<String?> roleAt(String building, String pubkey, String hlc) async {
+    final rows = await store.query(
+        "SELECT hlc, json FROM events WHERE entity = 'members' AND entity_id = ? AND status = 'applied' ORDER BY hlc",
+        ['$building:$pubkey']);
+    if (rows.isEmpty) return null;
+    String? role;
+    var deleted = false;
+    var any = false;
+    for (final r in rows) {
+      if ((r['hlc'] as String).compareTo(hlc) > 0) break;
+      any = true;
+      final c = jsonDecode((jsonDecode(r['json'] as String) as Map)['content'] as String) as Map;
+      final f = (c['fields'] as Map?) ?? const {};
+      if (c['op'] == 'delete') {
+        deleted = true;
+      } else {
+        if (f.containsKey('role')) role = f['role'] as String?;
+        if (f.containsKey('deleted')) deleted = f['deleted'] == 1 || f['deleted'] == true;
+      }
+    }
+    if (!any) {
+      // Written before its author was added (a skewed clock): judge by the
+      // membership as it is now.
+      final m = await store.first(
+          'SELECT role, deleted FROM members WHERE id = ?', ['$building:$pubkey']);
+      if (m == null) return null;
+      return m['deleted'] == 1 ? _revoked : (m['role'] as String? ?? 'mod');
+    }
+    return deleted ? _revoked : (role ?? 'mod');
+  }
+
+  /// The role this identity has now in [building] (null: none).
+  Future<Role?> myRole(String building) async {
+    final b = await store.first('SELECT owner FROM buildings WHERE id = ?', [building]);
+    if (b != null && b['owner'] == me) return Role.owner;
+    final m = await store.first(
+        'SELECT role, deleted FROM members WHERE id = ?', ['$building:$me']);
+    if (m == null || m['deleted'] == 1) return null;
+    return roleOf(m['role']) ?? Role.mod;
   }
 
   Future<void> _retryPending(String building) async {

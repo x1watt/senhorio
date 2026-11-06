@@ -106,6 +106,18 @@ class Queries {
           .map((r) => r['pubkey'] as String)
           .toSet();
 
+  /// True when [me] holds buildings only as a tenant (role user).
+  Future<bool> onlyTenant(String me) async {
+    final total = await s.scalar('SELECT count(*) FROM buildings WHERE $_live') as int;
+    if (total == 0) return false;
+    final staff = await s.scalar(
+        "SELECT count(*) FROM buildings b WHERE b.deleted = 0 AND (b.owner = ? OR EXISTS ("
+        "SELECT 1 FROM members m WHERE m.id = b.id || ':' || ? AND m.deleted = 0 "
+        "AND (m.role IS NULL OR m.role != 'user')))",
+        [me, me]) as int;
+    return staff == 0;
+  }
+
   // ------------------------------------------------------------ attachments
 
   /// Stores a file (deduplicated by SHA-256) and returns its hash.

@@ -35,7 +35,7 @@ Future<void> seedDemoData(Ledger ledger, Checkpoints checkpoints) async {
     building: b,
     id: '$b:${partner.pubkey}',
     op: 'upsert',
-    fields: {'pubkey': partner.pubkey, 'name': 'Maria (sócia)', 'role': 'member'},
+    fields: {'pubkey': partner.pubkey, 'name': 'Maria (sócia)', 'role': 'admin'},
   ));
 
   final a1 = add('apartments', {'name': '1º Esquerdo', 'floor': '1'});

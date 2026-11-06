@@ -246,11 +246,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get membersHelpMember =>
-      'Os membros partilham a contabilidade deste prédio. Só o dono pode adicionar ou revogar membros.';
+      'Estas pessoas partilham este prédio. O dono e os administradores gerem os membros; os gestores podem convidar inquilinos.';
 
   @override
   String get membersHelpOwner =>
-      'Adicione o npub de cada pessoa que partilha este prédio. Recebem todos os dados por sincronização cifrada via Reticulum.';
+      'Convide pessoas com um código curto, ou adicione o npub. Administradores gerem tudo, gestores o dia a dia, inquilinos veem só o seu contrato.';
 
   @override
   String get method => 'Método';
@@ -704,4 +704,108 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get downloadAndInstall => 'Descarregar e instalar';
+
+  @override
+  String get invite => 'Convidar';
+
+  @override
+  String get joinWithCode => 'Entrar com código';
+
+  @override
+  String get inviteCode => 'Código de convite';
+
+  @override
+  String get role => 'Função';
+
+  @override
+  String roleName(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'owner': 'Dono',
+      'admin': 'Administrador',
+      'mod': 'Gestor',
+      'member': 'Gestor',
+      'user': 'Inquilino',
+      'other': 'Membro',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String roleHelp(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'admin': 'Co-proprietário: vê e altera tudo, incluindo quem é membro.',
+      'mod':
+          'Gere o dia a dia: quartos, contratos, rendas, despesas. Pode convidar inquilinos.',
+      'user':
+          'Um inquilino: vê só o seu contrato e pagamentos, não altera nada.',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get whichTenant => 'Que inquilino é esta pessoa?';
+
+  @override
+  String get noTenantsToInvite =>
+      'Adicione primeiro o inquilino (separador Inquilinos) e depois convide-o.';
+
+  @override
+  String get nameOptional => 'Nome (opcional)';
+
+  @override
+  String inviteCodeHelp(String time) {
+    return 'Dê este código à pessoa. Na app, ela abre Prédios → Entrar com código. Funciona uma vez, até $time.';
+  }
+
+  @override
+  String get copy => 'Copiar';
+
+  @override
+  String get openInvites => 'Convites abertos';
+
+  @override
+  String get cancelInvite => 'Cancelar convite';
+
+  @override
+  String until(String time) {
+    return 'até $time';
+  }
+
+  @override
+  String get enterInviteCode => 'Escreva o código de 4 caracteres que recebeu.';
+
+  @override
+  String get joining => 'À procura do prédio…';
+
+  @override
+  String joined(String name) {
+    return 'Entrou em $name. Os dados estão a chegar.';
+  }
+
+  @override
+  String joinError(String reason) {
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'invalid': 'Este código não é válido.',
+      'expired': 'Este código expirou: peça um novo.',
+      'used': 'Este código já foi usado.',
+      'self': 'Esse é o seu próprio código.',
+      'notFound':
+          'Ninguém está a oferecer este código agora. Verifique o código e se a app de quem convidou está aberta e online.',
+      'timeout': 'Quem convidou não respondeu. Tente de novo.',
+      'busy': 'Já a entrar…',
+      'other': 'Não foi possível entrar.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get syncNeededForInvites =>
+      'A sincronização está desligada. Ligue-a (Mais → Sincronização) para usar códigos de convite.';
+
+  @override
+  String get changeRole => 'Mudar função';
+
+  @override
+  String get tenantView => 'É inquilino aqui: vê o seu contrato e pagamentos.';
 }

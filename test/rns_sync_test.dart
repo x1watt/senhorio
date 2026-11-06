@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:senhorio/data/ledger.dart';
 import 'package:senhorio/data/queries.dart';
 import 'package:senhorio/data/zx_store.dart';
+import 'package:senhorio/domain/roles.dart';
 import 'package:senhorio/identity/identity_service.dart';
 import 'package:senhorio/sync/sync_service.dart';
 
@@ -49,10 +50,20 @@ void main() {
     await lb.upsert('apartments', b, {'name': 'R/C'});
     expect(await waitFor(() async => (await Queries(sa).apartments(b)).isNotEmpty), isTrue);
 
-    await ya.stop();
-    await yb.stop();
-    await sa.close();
-    await sb.close();
+    // carol joins with an invite code found through alice's announce tag
+    final carol = Identity.generate();
+    final (sc, _, yc) = await peer('c', carol);
+    final inv = await ya.invites.create(b, Role.mod);
+    final r = await yc.invites.join(inv.code);
+    expect(r.building, b);
+    expect(await waitFor(() async => (await Queries(sc).apartments(b)).isNotEmpty), isTrue);
+
+    for (final y in [ya, yb, yc]) {
+      await y.stop();
+    }
+    for (final s in [sa, sb, sc]) {
+      await s.close();
+    }
     await dir.delete(recursive: true);
   }, skip: hub == null ? 'set SENHORIO_HUB=host:port to run' : null,
       timeout: const Timeout(Duration(minutes: 5)));

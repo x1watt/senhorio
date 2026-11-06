@@ -37,7 +37,9 @@ class PeerInfo {
   final Uint8List lxmfDest;
   DateTime lastSeen;
   String via;
-  PeerInfo(this.pubkey, this.identity, this.lxmfDest, this.lastSeen, this.via);
+  /// Invite tags in its last announce (see sync/invites.dart).
+  Set<int> tags;
+  PeerInfo(this.pubkey, this.identity, this.lxmfDest, this.lastSeen, this.via, [this.tags = const {}]);
 }
 
 class RnsNode extends ChangeNotifier {
@@ -58,6 +60,21 @@ class RnsNode extends ChangeNotifier {
   final peers = <String, PeerInfo>{};
 
   Iterable<PeerInfo> peersOf(String pubkey) => peers.values.where((p) => p.pubkey == pubkey);
+
+  /// Npubs of the nodes whose announce carries invite [tag].
+  Iterable<String> peersWithTag(int tag) =>
+      peers.values.where((p) => p.tags.contains(tag)).map((p) => p.pubkey).toSet();
+
+  /// Invite tags we announce (at most [maxTags]).
+  Set<int> _tags = {};
+  static const maxTags = 16;
+
+  void setInviteTags(Set<int> tags) {
+    final t = tags.take(maxTags).toSet();
+    if (setEquals(t, _tags)) return;
+    _tags = t;
+    if (running) unawaited(announce(force: true));
+  }
   bool knows(String pubkey) => peers.values.any((p) => p.pubkey == pubkey);
   final _byLxmf = <String, String>{}; // lxmf dest hex -> pubkey
   final logLines = <String>[];
@@ -209,10 +226,11 @@ class RnsNode extends ChangeNotifier {
   }
 
   /// appData = npub pubkey (32) || schnorr(sha256("senhorio-bind" || rns hash)) (64)
+  ///           || invite tags (0..16 bytes; covered by the announce signature)
   Uint8List _bindingAppData() {
     final pk = bytesOfHex(nostr.pubkey);
     final sig = bytesOfHex(NostrCrypto.schnorrSign(_bindDigest(_id!.hash), nostr.privateKeyHex));
-    return Uint8List.fromList([...pk, ...sig]);
+    return Uint8List.fromList([...pk, ...sig, ..._tags]);
   }
 
   static String _bindDigest(Uint8List rnsHash) =>
@@ -249,7 +267,7 @@ class RnsNode extends ChangeNotifier {
     if (id == null || _eq(ann.identity.hash, id.hash)) return;
     if (!_eq(ann.destHash, RnsDestination.hash(ann.identity, kSyncApp, kSyncAspects))) return;
     final ad = ann.appData;
-    if (ad.length != 96) return;
+    if (ad.length < 96 || ad.length > 96 + maxTags) return;
     final pk = hexOf(ad.sublist(0, 32));
     final sig = hexOf(ad.sublist(32, 96));
     bool ok;
@@ -262,7 +280,7 @@ class RnsNode extends ChangeNotifier {
     final lx = RnsDestination.hash(ann.identity, kLxmfApp, kLxmfDeliveryAspects);
     final key = '$pk/${ann.identity.hexHash}';
     final known = peers[key];
-    peers[key] = PeerInfo(pk, ann.identity, lx, DateTime.now(), via);
+    peers[key] = PeerInfo(pk, ann.identity, lx, DateTime.now(), via, ad.sublist(96).toSet());
     _byLxmf[hexOf(lx)] = pk;
     if (known == null) {
       log('peer ${shortNpub(pk)} via $via');

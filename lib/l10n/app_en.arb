@@ -76,8 +76,8 @@
   "lateRent": "Late rent",
   "member": "Member",
   "members": "Members",
-  "membersHelpMember": "Members share this building's accounting. Only the owner can add or revoke members.",
-  "membersHelpOwner": "Add the npub of each person who shares this building. They receive all of its data over encrypted Reticulum sync.",
+  "membersHelpMember": "These people share this building. The owner and admins manage members; mods can invite tenants.",
+  "membersHelpOwner": "Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.",
   "method": "Method",
   "methodHint": "Transfer, cash, MB Way…",
   "more": "More",
@@ -330,5 +330,68 @@
   },
   "later": "Later",
   "openReleasePage": "Release page",
-  "downloadAndInstall": "Download and install"
+  "downloadAndInstall": "Download and install",
+  "invite": "Invite",
+  "joinWithCode": "Join with a code",
+  "inviteCode": "Invite code",
+  "role": "Role",
+  "roleName": "{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} other{Member}}",
+  "@roleName": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "roleHelp": "{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} other{}}",
+  "@roleHelp": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "whichTenant": "Which tenant is this person?",
+  "noTenantsToInvite": "Add the tenant first (Tenants tab), then invite them.",
+  "nameOptional": "Name (optional)",
+  "inviteCodeHelp": "Give this code to the person. In the app they open Buildings → Join with a code. It works once, until {time}.",
+  "@inviteCodeHelp": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "copy": "Copy",
+  "openInvites": "Open invites",
+  "cancelInvite": "Cancel invite",
+  "until": "until {time}",
+  "@until": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "enterInviteCode": "Type the 4-character code you were given.",
+  "joining": "Looking for the building…",
+  "joined": "You joined {name}. Its data is arriving.",
+  "@joined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinError": "{reason, select, invalid{This code is not valid.} expired{This code has expired: ask for a new one.} used{This code was already used.} self{That is your own code.} notFound{Nobody is offering this code right now. Check the code, and that the inviter's app is open and online.} timeout{The inviter did not answer. Try again.} busy{Already joining…} other{Could not join.}}",
+  "@joinError": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNeededForInvites": "Sync is off. Turn it on (More → Sync) to use invite codes.",
+  "changeRole": "Change role",
+  "tenantView": "You are a tenant here: you see your own lease and payments."
 }

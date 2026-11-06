@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/dates.dart';
 import '../../data/zx_store.dart';
 import '../../domain/rent_schedule.dart';
+import '../../domain/roles.dart';
 import '../forms.dart';
 import '../widgets/attachments.dart';
 import '../widgets/common.dart';
@@ -14,7 +15,8 @@ class _RoomData {
   final DbRow room;
   final List<DbRow> apartments, tenants, leases;
   final Map<String, List<DbRow>> payments; // lease id -> payments
-  _RoomData(this.room, this.apartments, this.tenants, this.leases, this.payments);
+  final bool readOnly; // a tenant looking at their own room
+  _RoomData(this.room, this.apartments, this.tenants, this.leases, this.payments, this.readOnly);
 }
 
 class RoomScreen extends StatelessWidget {
@@ -32,7 +34,7 @@ class RoomScreen extends StatelessWidget {
         final leases = await a.q.leases(room: roomId);
         return _RoomData(room, await a.q.apartments(b), await a.q.tenants(b), leases, {
           for (final le in leases) le['id'] as String: await a.q.payments(lease: le['id'] as String),
-        });
+        }, !((await a.ledger.myRole(b))?.isStaff ?? true));
       },
       builder: (context, d) {
         if (d == null || d.room['deleted'] == 1) {
@@ -49,7 +51,7 @@ class RoomScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: Text(d.room['name'] as String? ?? ''),
-            actions: [
+            actions: d.readOnly ? null : [
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => editEntity(context, table: 'rooms', building: bid, title: l.edit,
@@ -66,7 +68,7 @@ class RoomScreen extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
+          floatingActionButton: d.readOnly ? null : FloatingActionButton.extended(
             icon: const Icon(Icons.assignment_add),
             label: Text(l.newLease),
             onPressed: () async {
@@ -93,6 +95,7 @@ class RoomScreen extends StatelessWidget {
                 status: leaseStatus(le, d.payments[le['id']] ?? const [], now),
                 payments: d.payments[le['id']] ?? const [],
                 tenants: d.tenants,
+                readOnly: d.readOnly,
               ),
             if (d.leases.isNotEmpty) SectionHeader(l.occupancyHistory),
             if (d.leases.isNotEmpty) _OccupancyTimeline(leases: d.leases, tenants: tenants, payments: d.payments),
@@ -104,7 +107,7 @@ class RoomScreen extends StatelessWidget {
                 subtitle: Text('${le['start_date']} → ${le['end_date']}'
                     '${depositHeld(d.payments[le['id']] ?? const []) != 0 ? ' · ${l.depositHeld}: ${context.money(depositHeld(d.payments[le['id']] ?? const []))}' : ''}'),
                 trailing: Text(context.money(le['rent_cents'] as int?)),
-                onTap: () => _showPastLease(context, le, tenants[le['tenant_id']], d.payments[le['id']] ?? const [], d.tenants),
+                onTap: () => _showPastLease(context, le, tenants[le['tenant_id']], d.payments[le['id']] ?? const [], d.tenants, d.readOnly),
               ),
           ]),
         );
@@ -123,7 +126,8 @@ class RoomScreen extends StatelessWidget {
         'start_date': todayIso(),
       });
 
-  void _showPastLease(BuildContext context, DbRow le, DbRow? tenant, List<DbRow> payments, List<DbRow> tenants) {
+  void _showPastLease(BuildContext context, DbRow le, DbRow? tenant, List<DbRow> payments, List<DbRow> tenants,
+      bool readOnly) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -132,7 +136,7 @@ class RoomScreen extends StatelessWidget {
         initialChildSize: 0.7,
         builder: (c, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.all(8), children: [
           _LeaseCard(lease: le, tenant: tenant, status: leaseStatus(le, payments, DateTime.now()),
-              payments: payments, tenants: tenants),
+              payments: payments, tenants: tenants, readOnly: readOnly),
         ]),
       ),
     );
@@ -190,8 +194,9 @@ class _LeaseCard extends StatelessWidget {
   final LeaseStatus status;
   final List<DbRow> payments;
   final List<DbRow> tenants;
+  final bool readOnly;
   const _LeaseCard({required this.lease, required this.tenant, required this.status,
-      required this.payments, required this.tenants});
+      required this.payments, required this.tenants, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +216,7 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: Text(tenant?['name'] as String? ?? '?',
                 style: Theme.of(context).textTheme.titleMedium)),
-            PopupMenuButton<String>(
+            if (!readOnly) PopupMenuButton<String>(
               onSelected: (v) async {
                 if (v == 'edit') {
                   await editEntity(context, table: 'leases', building: bid, title: l.edit,
@@ -264,7 +269,7 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(height: 4),
             AttachmentList(
               shas: docs,
-              onChanged: (list) => guarded(context, () => context.app.ledger.upsert(
+              onChanged: readOnly ? null : (list) => guarded(context, () => context.app.ledger.upsert(
                   'tenants', bid, {'id_documents': list}, id: tenant!['id'] as String)),
             ),
           ],
@@ -275,7 +280,7 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(child: Text('${l.depositHeld}: ${context.money(held)}'
                 '${lease['deposit_cents'] != null ? ' / ${context.money(lease['deposit_cents'] as int)}' : ''}')),
-            TextButton(onPressed: () => _pay(context, null, kind: held > 0 ? 'deposit_return' : 'deposit'),
+            if (!readOnly) TextButton(onPressed: () => _pay(context, null, kind: held > 0 ? 'deposit_return' : 'deposit'),
                 child: Text(held > 0 ? l.settleDeposit : l.registerDeposit)),
           ]),
           const Divider(),
@@ -301,7 +306,7 @@ class _LeaseCard extends StatelessWidget {
               subtitle: due.paid > 0 && due.paid < due.expected
                   ? Text(l.paidOf(context.money(due.paid), context.money(due.expected)))
                   : null,
-              trailing: due.state == DueState.paid
+              trailing: due.state == DueState.paid || readOnly
                   ? null
                   : TextButton(
                       onPressed: () => _pay(context, due),
@@ -320,7 +325,7 @@ class _LeaseCard extends StatelessWidget {
                     '${isRentPayment(p) ? '' : ' · ${l.paymentKind(p['kind'] as String)}'}'),
                 subtitle: Text('${isRentPayment(p) ? '${l.period}: ${p['period'] ?? '-'}' : ''}'
                     '${p['method'] == null ? '' : ' · ${p['method']}'}${p['notes'] == null ? '' : ' · ${p['notes']}'}'),
-                trailing: IconButton(
+                trailing: readOnly ? null : IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   onPressed: () async {
                     if (await confirm(context, l.confirmDelete) && context.mounted) {

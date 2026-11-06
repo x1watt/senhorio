@@ -6,8 +6,15 @@
 //          events the sender lacks (only for buildings the sender is a member
 //          of) and, when `first`, with its own hello.
 //   events {t, e: [nostr event json...]}   batches of signed ledger events
-//   need   {t, sha: [...]}                  receipts we reference but lack
+//   need   {t, sha: [...]}                  receipts / ID documents we lack
 //   blob   {t, sha, mime, data(base64)}     one receipt
+//   skip   {t, b, r: [[lane, from, to]...]} sequences a tenant may not see
+//   join / join-ok / join-fail              invite codes (sync/invites.dart)
+//
+// A tenant (role user) only receives the building, their own tenant row,
+// leases, payments, rooms and apartments, and the managers' memberships;
+// `skip` tells them which sequences were left out so their vectors have
+// no gaps.
 //
 // Events are self-authenticating (signed); the projector decides what to
 // accept. This layer only decides who may *receive* a building's data.
@@ -23,6 +30,7 @@ import '../data/ledger.dart';
 import '../data/queries.dart';
 import '../data/schema.dart';
 import '../data/zx_store.dart';
+import '../domain/roles.dart';
 
 /// Sends one message to a peer; resolves false when it could not be delivered.
 typedef SendToPeer = Future<bool> Function(String pubkey, Map<String, Object?> msg);
@@ -42,6 +50,9 @@ class SyncEngine {
 
   /// Called before applying a batch from [from] that deletes something.
   Future<void> Function(String from)? onRemoteDeletes;
+
+  /// Handles the invite messages (`join`, `join-ok`, `join-fail`).
+  Future<void> Function(String from, Map<String, Object?> msg)? onInvite;
 
   /// Max bytes of event JSON per message.
   static const batchBytes = 48 * 1024;
@@ -78,22 +89,84 @@ class SyncEngine {
     return {...all, ...owners, me};
   }
 
+  /// What [peer] may receive of [building]: null = everything (managers,
+  /// the owner, our own devices); otherwise the tenant's rows.
+  Future<TenantScope?> scopeFor(String peer, String building) async {
+    if (peer == me || building == globalBuilding) return null;
+    final m = await store.first(
+        'SELECT role, tenant_id FROM members WHERE id = ?', ['$building:$peer']);
+    if (m == null || roleOf(m['role']) != Role.user) return null;
+    final b = await store.first('SELECT owner FROM buildings WHERE id = ?', [building]);
+    if (b?['owner'] == peer) return null;
+    final tid = m['tenant_id'] as String?;
+    final ids = <String>{'buildings/$building'};
+    Future<List<String>> idsOf(String sql, List<Object?> args) async =>
+        [for (final r in await store.query(sql, args)) r['id'] as String];
+    String inList(int n) => List.filled(n, '?').join(', ');
+    for (final id in await idsOf(
+        "SELECT id FROM members WHERE building_id = ? AND (id = ? OR role IS NULL OR role != 'user')",
+        [building, '$building:$peer'])) {
+      ids.add('members/$id');
+    }
+    if (tid != null) {
+      ids.add('tenants/$tid');
+      final leases = await store.query(
+          'SELECT id, room_id FROM leases WHERE building_id = ? AND tenant_id = ?', [building, tid]);
+      final leaseIds = [for (final r in leases) r['id'] as String];
+      final roomIds = {for (final r in leases) ?r['room_id'] as String?}.toList();
+      ids.addAll(leaseIds.map((i) => 'leases/$i'));
+      ids.addAll(roomIds.map((i) => 'rooms/$i'));
+      if (leaseIds.isNotEmpty) {
+        ids.addAll((await idsOf(
+                'SELECT id FROM payments WHERE lease_id IN (${inList(leaseIds.length)})', leaseIds))
+            .map((i) => 'payments/$i'));
+      }
+      if (roomIds.isNotEmpty) {
+        final apts = await store.query(
+            'SELECT apartment_id FROM rooms WHERE id IN (${inList(roomIds.length)})', roomIds);
+        for (final a in apts) {
+          if (a['apartment_id'] != null) ids.add('apartments/${a['apartment_id']}');
+        }
+      }
+    }
+    return TenantScope(ids);
+  }
+
   // ---------------------------------------------------------------- vectors
 
-  /// author/device -> highest seq such that every seq 1..n is held.
+  /// author/device -> highest seq such that every seq 1..n is held (or,
+  /// on a tenant's device, was declared hidden by a manager).
   Future<Map<String, int>> vector(String building) async {
     final rows = await store.query(
-        'SELECT author, device, seq FROM events WHERE building_id = ? ORDER BY author, device, seq',
-        [building]);
-    final out = <String, int>{};
+        'SELECT author, device, seq FROM events WHERE building_id = ?', [building]);
+    final held = <String, Set<int>>{};
     for (final r in rows) {
-      final a = '${r['author']}/${r['device'] ?? ''}';
-      final s = r['seq'] as int;
-      final have = out[a] ?? 0;
-      if (s == have + 1) out[a] = s;
-      out.putIfAbsent(a, () => 0);
+      held.putIfAbsent('${r['author']}/${r['device'] ?? ''}', () => {}).add(r['seq'] as int);
     }
-    out.removeWhere((_, v) => v == 0);
+    final ranges = <String, List<(int, int)>>{};
+    for (final r in await store.query(
+        'SELECT lane, from_seq, to_seq FROM hidden_ranges WHERE building_id = ?', [building])) {
+      ranges.putIfAbsent(r['lane'] as String, () => []).add((r['from_seq'] as int, r['to_seq'] as int));
+    }
+    final out = <String, int>{};
+    for (final lane in {...held.keys, ...ranges.keys}) {
+      final h = held[lane] ?? const <int>{};
+      final rs = ranges[lane] ?? const <(int, int)>[];
+      var n = 0;
+      while (true) {
+        if (h.contains(n + 1)) {
+          n++;
+          continue;
+        }
+        var to = n;
+        for (final (a, b) in rs) {
+          if (a <= n + 1 && b > to) to = b;
+        }
+        if (to == n) break;
+        n = to;
+      }
+      if (n > 0) out[lane] = n;
+    }
     return out;
   }
 
@@ -128,6 +201,10 @@ class SyncEngine {
           await _onNeed(from, msg);
         case 'blob':
           await _onBlob(msg);
+        case 'skip':
+          await _onSkip(from, msg);
+        case 'join' || 'join-ok' || 'join-fail':
+          await onInvite?.call(from, msg);
       }
     } catch (e) {
       log?.call('sync: bad ${msg['t']} from ${from.substring(0, 8)}: $e');
@@ -157,15 +234,68 @@ class SyncEngine {
   }
 
   Future<void> _sendMissing(String to, String building, Map<String, int> theirs) async {
+    final scope = await scopeFor(to, building);
     final rows = await store.query(
-        "SELECT author, device, seq, json FROM events WHERE building_id = ? AND status = 'applied' ORDER BY hlc",
+        "SELECT author, device, seq, entity, entity_id, status, json FROM events WHERE building_id = ? "
+        "AND status ${scope == null ? "= 'applied'" : "!= 'pending'"} ORDER BY hlc",
         [building]);
     final out = <String>[];
+    final hidden = <String, List<int>>{};
     for (final r in rows) {
       final lane = '${r['author']}/${r['device'] ?? ''}';
-      if ((r['seq'] as int) > (theirs[lane] ?? 0)) out.add(r['json'] as String);
+      final seq = r['seq'] as int;
+      if (seq <= (theirs[lane] ?? 0)) continue;
+      if (scope == null ||
+          (r['status'] == 'applied' &&
+              scope.visible(r['entity'] as String, r['entity_id'] as String))) {
+        out.add(r['json'] as String);
+      } else {
+        hidden.putIfAbsent(lane, () => []).add(seq);
+      }
     }
     await _sendEvents(to, out);
+    await _sendSkip(to, building, hidden);
+  }
+
+  /// Tells a tenant which sequences of [building] were left out.
+  Future<void> _sendSkip(String to, String building, Map<String, List<int>> hidden) async {
+    if (hidden.isEmpty) return;
+    final r = <List<Object>>[];
+    for (final e in hidden.entries) {
+      final seqs = e.value..sort();
+      var from = seqs.first, prev = seqs.first;
+      for (final s in seqs.skip(1)) {
+        if (s == prev + 1) {
+          prev = s;
+          continue;
+        }
+        r.add([e.key, from, prev]);
+        from = prev = s;
+      }
+      r.add([e.key, from, prev]);
+    }
+    await _send(to, {'t': 'skip', 'b': building, 'r': r});
+  }
+
+  Future<void> _onSkip(String from, Map<String, Object?> msg) async {
+    final b = msg['b'] as String;
+    // Only a tenant accepts gaps, and only from someone sharing the building.
+    if (await ledger.myRole(b) != Role.user) return;
+    if (!(await buildingsSharedWith(from)).contains(b)) return;
+    final ranges = (msg['r'] as List?) ?? const [];
+    if (ranges.isEmpty) return;
+    await store.transaction(() async {
+      for (final x in ranges) {
+        final l = x as List;
+        final args = [b, l[0] as String, (l[1] as num).toInt(), (l[2] as num).toInt()];
+        final have = await store.scalar(
+            'SELECT 1 FROM hidden_ranges WHERE building_id = ? AND lane = ? AND from_seq = ? AND to_seq = ?', args);
+        if (have == null) {
+          await store.db.execute(
+              'INSERT INTO hidden_ranges (building_id, lane, from_seq, to_seq) VALUES (?, ?, ?, ?)', args);
+        }
+      }
+    });
   }
 
   Future<void> _sendEvents(String to, List<String> jsons) async {
@@ -201,14 +331,29 @@ class SyncEngine {
     stats.eventsIn += n;
     stats.lastSync = DateTime.now();
     if (n > 0) await _requestMissingBlobs(from);
+    // A tenant whose lease or membership changed may now see rows it was
+    // told to skip: forget the gaps and ask again.
+    final widened = {
+      for (final (b, entity) in ledger.lastApplied)
+        if (entity == 'leases' || entity == 'members') b,
+    };
+    for (final b in widened) {
+      if (await ledger.myRole(b) != Role.user) continue;
+      await store.exec('DELETE FROM hidden_ranges WHERE building_id = ?', [b]);
+      await syncWith(from);
+    }
   }
 
   Future<void> _requestMissingBlobs(String from) async {
-    final rows = await store.query(
-        "SELECT attachments FROM expenses WHERE deleted = 0 AND attachments IS NOT NULL AND attachments != '[]'");
+    final rows = [
+      ...await store.query(
+          "SELECT attachments AS a FROM expenses WHERE deleted = 0 AND attachments IS NOT NULL AND attachments != '[]'"),
+      ...await store.query(
+          "SELECT id_documents AS a FROM tenants WHERE deleted = 0 AND id_documents IS NOT NULL AND id_documents != '[]'"),
+    ];
     final need = <String>{};
     for (final r in rows) {
-      for (final sha in (jsonDecode(r['attachments'] as String) as List).cast<String>()) {
+      for (final sha in (jsonDecode(r['a'] as String) as List).cast<String>()) {
         if (!await q.hasAttachment(sha)) need.add(sha);
       }
     }
@@ -241,25 +386,38 @@ class SyncEngine {
 
   void _pushLocal(List<LedgerEvent> events) {
     unawaited(() async {
-      final byBuilding = <String, List<String>>{};
+      final byBuilding = <String, List<LedgerEvent>>{};
       for (final e in events) {
-        byBuilding.putIfAbsent(e.building, () => []).add(jsonEncode(e.raw.toJson()));
+        byBuilding.putIfAbsent(e.building, () => []).add(e);
       }
       for (final peer in await partners()) {
-        final shared = await buildingsSharedWith(peer);
-        final out = [
-          for (final b in byBuilding.entries)
-            if (b.key == globalBuilding || shared.contains(b.key)) ...b.value,
-        ];
         // A member added just now also needs the history it lacks.
         if (events.any((e) => e.entity == 'members' && e.fields['pubkey'] == peer)) {
           await syncWith(peer);
           continue;
         }
+        final shared = await buildingsSharedWith(peer);
+        final out = <String>[];
+        for (final b in byBuilding.entries) {
+          if (b.key != globalBuilding && !shared.contains(b.key)) continue;
+          final scope = await scopeFor(peer, b.key);
+          final hidden = <String, List<int>>{};
+          for (final e in b.value) {
+            if (scope == null || scope.visible(e.entity, e.entityId)) {
+              out.add(jsonEncode(e.raw.toJson()));
+            } else {
+              hidden.putIfAbsent(e.lane, () => []).add(e.seq);
+            }
+          }
+          await _sendSkip(peer, b.key, hidden);
+        }
         if (out.isNotEmpty) await _sendEvents(peer, out);
       }
     }());
   }
+
+  /// Sends one message to [to] (used by the invites).
+  Future<bool> post(String to, Map<String, Object?> msg) => _send(to, msg);
 
   Future<bool> _send(String to, Map<String, Object?> msg) async {
     stats.sent++;
@@ -270,4 +428,11 @@ class SyncEngine {
       return false;
     }
   }
+}
+
+/// The rows a tenant may receive, as "entity/id".
+class TenantScope {
+  final Set<String> ids;
+  TenantScope(this.ids);
+  bool visible(String entity, String id) => ids.contains('$entity/$id');
 }

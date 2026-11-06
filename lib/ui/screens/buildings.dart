@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../data/zx_store.dart';
 import '../../domain/rent_schedule.dart';
+import '../../domain/roles.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
 import '../widgets/room_mosaic.dart';
 import 'building_tabs.dart';
+import 'invites.dart';
 import 'room.dart';
 
 class BuildingsScreen extends StatelessWidget {
@@ -16,7 +18,13 @@ class BuildingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l;
     return Scaffold(
-      appBar: AppBar(title: Text(l.buildings)),
+      appBar: AppBar(title: Text(l.buildings), actions: [
+        IconButton(
+          icon: const Icon(Icons.vpn_key_outlined),
+          tooltip: l.joinWithCode,
+          onPressed: () => joinWithCode(context),
+        ),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add_home_work),
         label: Text(l.newBuilding),
@@ -31,8 +39,15 @@ class BuildingsScreen extends StatelessWidget {
       body: LiveFuture<List<DbRow>>(
         load: (a) => a.q.buildings(),
         builder: (context, rows) => rows.isEmpty
-            ? EmptyState(Icons.apartment, l.noBuildings)
-            : ListView(children: [
+            ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                EmptyState(Icons.apartment, l.noBuildings),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.vpn_key_outlined),
+                  label: Text(l.joinWithCode),
+                  onPressed: () => joinWithCode(context),
+                ),
+              ])
+            : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
                 for (final b in rows)
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.apartment)),
@@ -55,27 +70,31 @@ class BuildingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l;
-    return LiveFuture<DbRow?>(
-      load: (a) => a.q.byId('buildings', buildingId),
-      builder: (context, b) {
+    return LiveFuture<(DbRow?, Role?)>(
+      load: (a) async => (await a.q.byId('buildings', buildingId), await a.ledger.myRole(buildingId)),
+      builder: (context, d) {
+        final (b, role) = d;
         if (b == null || b['deleted'] == 1) {
-          return Scaffold(appBar: AppBar(), body: EmptyState(Icons.delete, l.deleted));
+          // A building we just joined arrives by sync a moment later.
+          return Scaffold(appBar: AppBar(), body: b == null
+              ? const Center(child: CircularProgressIndicator())
+              : EmptyState(Icons.delete, l.deleted));
         }
-        final isOwner = b['owner'] == context.app.identity.pubkey;
+        final staff = role?.isStaff ?? true;
         return DefaultTabController(
-          length: 4,
+          length: staff ? 4 : 2,
           child: Scaffold(
             appBar: AppBar(
               title: Text(b['name'] as String? ?? ''),
               actions: [
-                IconButton(
+                if (staff) IconButton(
                   icon: const Icon(Icons.edit),
                   tooltip: l.edit,
                   onPressed: () => editEntity(context,
                       table: 'buildings', building: buildingId, title: l.edit,
                       fields: buildingFields(l), row: b),
                 ),
-                if (isOwner)
+                if (role?.canDeleteBuilding ?? false)
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     tooltip: l.delete,
@@ -89,16 +108,16 @@ class BuildingScreen extends StatelessWidget {
               ],
               bottom: TabBar(isScrollable: true, tabs: [
                 Tab(text: l.units),
-                Tab(text: l.tenants),
-                Tab(text: l.recurringBills),
+                if (staff) Tab(text: l.tenants),
+                if (staff) Tab(text: l.recurringBills),
                 Tab(text: l.members),
               ]),
             ),
             body: TabBarView(children: [
-              UnitsTab(building: b),
-              TenantsTab(building: b),
-              RecurringBillsTab(building: b),
-              MembersTab(building: b),
+              UnitsTab(building: b, readOnly: !staff),
+              if (staff) TenantsTab(building: b),
+              if (staff) RecurringBillsTab(building: b),
+              MembersTab(building: b, role: role),
             ]),
           ),
         );
@@ -111,7 +130,8 @@ class BuildingScreen extends StatelessWidget {
 /// the rent is late.
 class UnitsTab extends StatelessWidget {
   final DbRow building;
-  const UnitsTab({super.key, required this.building});
+  final bool readOnly; // a tenant looking at their own room
+  const UnitsTab({super.key, required this.building, this.readOnly = false});
 
   String get bid => building['id'] as String;
 
@@ -136,7 +156,7 @@ class UnitsTab extends StatelessWidget {
         return _UnitsData(apts, rooms, active, tenants);
       },
       builder: (context, d) => Scaffold(
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: readOnly ? null : FloatingActionButton(
           heroTag: 'unit-$bid',
           tooltip: l.newApartment,
           onPressed: () => _addMenu(context, d),
@@ -145,6 +165,11 @@ class UnitsTab extends StatelessWidget {
         body: d.apartments.isEmpty
             ? EmptyState(Icons.door_front_door, l.noApartments)
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                if (readOnly)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(l.tenantView, style: Theme.of(context).textTheme.bodySmall),
+                  ),
                 if (d.rooms.isNotEmpty)
                   RoomMosaic(
                     rooms: [
@@ -176,7 +201,7 @@ class UnitsTab extends StatelessWidget {
       leading: const Icon(Icons.door_front_door),
       title: Text(apt['name'] as String? ?? ''),
       subtitle: Text(l.roomsRented(rented, rooms.length)),
-      trailing: PopupMenuButton<String>(
+      trailing: readOnly ? null : PopupMenuButton<String>(
         onSelected: (v) async {
           if (v == 'edit') {
             await editEntity(context, table: 'apartments', building: bid, title: l.edit,

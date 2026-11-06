@@ -9,6 +9,7 @@ import '../domain/checkpoints.dart';
 import '../data/zx_store.dart';
 import '../identity/identity_service.dart';
 import '../platform/background.dart';
+import 'invites.dart';
 import 'rns_node.dart';
 import 'sync_engine.dart';
 
@@ -17,6 +18,7 @@ class SyncService extends ChangeNotifier {
   final Ledger ledger;
   final KeyStore keys;
   late final SyncEngine engine;
+  late final Invites invites;
   RnsNode? node;
   Timer? _timer;
   final _lastHello = <String, DateTime>{};
@@ -26,6 +28,10 @@ class SyncService extends ChangeNotifier {
     engine = SyncEngine(ledger, store, send: _send, log: (m) => node?.log(m))
       ..onRemoteDeletes = (from) => Checkpoints(store, ledger)
           .create('auto: before deletes by ${shortNpub(from)}', ledger.me, auto: true);
+    invites = Invites(store, ledger, engine,
+        peersWithTag: (tag) => node?.peersWithTag(tag) ?? const <String>[])
+      ..onTags = ((tags) => node?.setInviteTags(tags))
+      ..onSearch = (() => unawaited(node?.announce(force: true)));
   }
 
   bool get running => node?.running ?? false;
@@ -87,6 +93,7 @@ class SyncService extends ChangeNotifier {
     n.addListener(notifyListeners);
     node = n;
     notifyListeners();
+    await invites.refreshTags();
     try {
       await n.start();
     } catch (e) {
@@ -136,6 +143,7 @@ class SyncService extends ChangeNotifier {
     final n = node;
     if (n == null) return;
     _lastSyncAll = DateTime.now();
+    await invites.refreshTags(); // expired codes leave the announce
     await n.announce();
     partners = await engine.partners();
     for (final pk in partners) {

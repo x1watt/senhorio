@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import '../../core/dates.dart';
 import '../../data/zx_store.dart';
 import '../../domain/recurrence.dart';
+import '../../domain/roles.dart';
 import '../../identity/identity_service.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
 import 'expenses.dart';
+import 'invites.dart';
 
 class TenantsTab extends StatelessWidget {
   final DbRow building;
@@ -37,14 +39,21 @@ class TenantsTab extends StatelessWidget {
                     subtitle: Text([t['phone'], t['email']].whereType<String>().join(' · ')),
                     onTap: () => editEntity(context, table: 'tenants', building: bid,
                         title: l.edit, fields: tenantFields(l), row: t),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () async {
-                        if (await confirm(context, l.confirmDelete) && context.mounted) {
-                          await guarded(context, () => context.app.ledger.delete('tenants', bid, t['id'] as String));
-                        }
-                      },
-                    ),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        icon: const Icon(Icons.vpn_key_outlined),
+                        tooltip: l.invite,
+                        onPressed: () => inviteToBuilding(context, bid, tenantId: t['id'] as String),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          if (await confirm(context, l.confirmDelete) && context.mounted) {
+                            await guarded(context, () => context.app.ledger.delete('tenants', bid, t['id'] as String));
+                          }
+                        },
+                      ),
+                    ]),
                   ),
               ]),
       ),
@@ -132,61 +141,99 @@ class RecurringBillsTab extends StatelessWidget {
 
 class MembersTab extends StatelessWidget {
   final DbRow building;
-  const MembersTab({super.key, required this.building});
+  final Role? role; // mine
+  const MembersTab({super.key, required this.building, required this.role});
 
   @override
   Widget build(BuildContext context) {
     final l = context.l;
     final bid = building['id'] as String;
     final me = context.app.identity.pubkey;
-    final isOwner = building['owner'] == me;
+    final mine = role;
+    final canInvite = mine != null && mine.canGrant.isNotEmpty;
+    final manages = mine == Role.owner || mine == Role.admin;
     return Scaffold(
-      floatingActionButton: !isOwner
+      floatingActionButton: !canInvite
           ? null
           : FloatingActionButton.extended(
               heroTag: 'member-$bid',
               icon: const Icon(Icons.group_add),
-              label: Text(l.addMember),
-              onPressed: () => _add(context, bid),
+              label: Text(l.invite),
+              onPressed: () => inviteToBuilding(context, bid),
             ),
       body: LiveFuture<List<DbRow>>(
         load: (a) => a.q.members(bid),
-        builder: (context, rows) => ListView(children: [
+        builder: (context, rows) => ListView(padding: const EdgeInsets.only(bottom: 88), children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(isOwner ? l.membersHelpOwner : l.membersHelpMember,
+            child: Text(manages ? l.membersHelpOwner : l.membersHelpMember,
                 style: Theme.of(context).textTheme.bodySmall),
           ),
-          for (final m in rows)
-            ListTile(
-              leading: Icon(m['role'] == 'owner' ? Icons.verified_user : Icons.person),
-              title: Text((m['name'] as String?) ??
-                  (m['pubkey'] == me ? l.you : shortNpub(m['pubkey'] as String))),
-              subtitle: Text('${m['role'] == 'owner' ? l.owner : l.member} · ${shortNpub(m['pubkey'] as String)}'),
-              trailing: isOwner && m['role'] != 'owner'
-                  ? IconButton(
-                      icon: const Icon(Icons.person_remove),
-                      tooltip: l.revoke,
-                      onPressed: () async {
-                        if (await confirm(context, l.confirmRevoke) && context.mounted) {
-                          await guarded(context,
-                              () => context.app.ledger.delete('members', bid, m['id'] as String));
-                        }
-                      },
-                    )
-                  : null,
+          if (canInvite) OpenInvites(building: bid),
+          for (final m in rows) _memberTile(context, bid, me, mine, m),
+          if (manages)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.key),
+                  label: Text(l.addMember),
+                  onPressed: () => _add(context, bid, mine!),
+                ),
+              ),
             ),
         ]),
       ),
     );
   }
 
-  Future<void> _add(BuildContext context, String bid) async {
+  Widget _memberTile(BuildContext context, String bid, String me, Role? mine, DbRow m) {
     final l = context.l;
+    final pk = m['pubkey'] as String;
+    final r = pk == building['owner'] ? Role.owner : (roleOf(m['role']) ?? Role.mod);
+    final canEdit = mine != null && pk != me && mine.canManage(r, null);
+    return ListTile(
+      leading: Icon(switch (r) {
+        Role.owner => Icons.verified_user,
+        Role.admin => Icons.admin_panel_settings,
+        Role.mod => Icons.manage_accounts,
+        Role.user => Icons.person,
+      }),
+      title: Text((m['name'] as String?) ?? (pk == me ? l.you : shortNpub(pk))),
+      subtitle: Text('${l.roleName(r.name)} · ${shortNpub(pk)}'),
+      trailing: !canEdit
+          ? null
+          : PopupMenuButton<String>(
+              onSelected: (v) async {
+                if (v == 'revoke') {
+                  if (await confirm(context, l.confirmRevoke) && context.mounted) {
+                    await guarded(context, () => context.app.ledger.delete('members', bid, m['id'] as String));
+                  }
+                } else {
+                  await guarded(context, () => context.app.ledger.upsert('members', bid,
+                      {'role': v}, id: m['id'] as String));
+                }
+              },
+              itemBuilder: (_) => [
+                for (final g in mine.canGrant)
+                  if (g != r && g != Role.user && r != Role.user)
+                    PopupMenuItem(value: g.name, child: Text('${l.changeRole}: ${l.roleName(g.name)}')),
+                PopupMenuItem(value: 'revoke', child: Text(l.revoke)),
+              ],
+            ),
+    );
+  }
+
+  Future<void> _add(BuildContext context, String bid, Role mine) async {
+    final l = context.l;
+    final grant = mine.canGrant.where((r) => r != Role.user).toList();
     final v = await showEntityForm(context, title: l.addMember, fields: [
       FieldSpec('npub', 'npub', required: true, hint: 'npub1…'),
       FieldSpec('name', l.name),
-    ]);
+      FieldSpec('role', l.role, type: FieldType.choice, required: true,
+          options: {for (final r in grant) r.name: l.roleName(r.name)}),
+    ], initial: {'role': Role.mod.name});
     if (v == null || !context.mounted) return;
     String pk;
     try {
@@ -196,6 +243,6 @@ class MembersTab extends StatelessWidget {
       return;
     }
     await guarded(context, () => context.app.ledger.upsert('members', bid,
-        {'pubkey': pk, 'name': v['name'], 'role': 'member', 'deleted': 0}, id: '$bid:$pk'));
+        {'pubkey': pk, 'name': v['name'], 'role': v['role'], 'deleted': 0}, id: '$bid:$pk'));
   }
 }

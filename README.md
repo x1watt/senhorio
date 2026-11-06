@@ -28,8 +28,18 @@ Android and desktop (Linux, Windows, macOS).
   - utility trends with cost per kWh/m³ and per rented room
   - occupancy and rent collected
 - **Sync between people** identified by NOSTR keys (npub/nsec), end-to-end
-  encrypted over **Reticulum** (public hubs + local network). The owner of
-  a building adds members by npub and can revoke them. On Android an
+  encrypted over **Reticulum** (public hubs + local network).
+- **Invite codes and roles:**
+  - The owner, an admin or a mod makes a short code (like `AB49`) for a
+    role. Anyone with the app types it in (Buildings → key icon) and
+    joins. A code works once, for 24 hours.
+  - **Admins** are co-owners. **Mods** run the day to day and can invite
+    tenants.
+  - **Tenants** (users) see only their own lease, room and payments,
+    read-only. Other tenants' data and the expenses never reach their
+    phone.
+  - Members can also be added by npub. Roles can be changed and members
+    revoked. On Android an
   optional foreground service keeps syncing with the app closed. See
   [docs/sync-protocol.md](docs/sync-protocol.md).
 - **Nothing is lost:**

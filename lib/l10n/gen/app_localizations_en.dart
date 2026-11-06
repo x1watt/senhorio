@@ -246,11 +246,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get membersHelpMember =>
-      'Members share this building\'s accounting. Only the owner can add or revoke members.';
+      'These people share this building. The owner and admins manage members; mods can invite tenants.';
 
   @override
   String get membersHelpOwner =>
-      'Add the npub of each person who shares this building. They receive all of its data over encrypted Reticulum sync.';
+      'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.';
 
   @override
   String get method => 'Method';
@@ -703,4 +703,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadAndInstall => 'Download and install';
+
+  @override
+  String get invite => 'Invite';
+
+  @override
+  String get joinWithCode => 'Join with a code';
+
+  @override
+  String get inviteCode => 'Invite code';
+
+  @override
+  String get role => 'Role';
+
+  @override
+  String roleName(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'owner': 'Owner',
+      'admin': 'Admin',
+      'mod': 'Mod',
+      'member': 'Mod',
+      'user': 'Tenant',
+      'other': 'Member',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String roleHelp(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'admin':
+          'Co-owner: sees and changes everything, including who is a member.',
+      'mod':
+          'Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.',
+      'user':
+          'A tenant: sees only their own lease and payments, changes nothing.',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get whichTenant => 'Which tenant is this person?';
+
+  @override
+  String get noTenantsToInvite =>
+      'Add the tenant first (Tenants tab), then invite them.';
+
+  @override
+  String get nameOptional => 'Name (optional)';
+
+  @override
+  String inviteCodeHelp(String time) {
+    return 'Give this code to the person. In the app they open Buildings → Join with a code. It works once, until $time.';
+  }
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get openInvites => 'Open invites';
+
+  @override
+  String get cancelInvite => 'Cancel invite';
+
+  @override
+  String until(String time) {
+    return 'until $time';
+  }
+
+  @override
+  String get enterInviteCode => 'Type the 4-character code you were given.';
+
+  @override
+  String get joining => 'Looking for the building…';
+
+  @override
+  String joined(String name) {
+    return 'You joined $name. Its data is arriving.';
+  }
+
+  @override
+  String joinError(String reason) {
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'invalid': 'This code is not valid.',
+      'expired': 'This code has expired: ask for a new one.',
+      'used': 'This code was already used.',
+      'self': 'That is your own code.',
+      'notFound':
+          'Nobody is offering this code right now. Check the code, and that the inviter\'s app is open and online.',
+      'timeout': 'The inviter did not answer. Try again.',
+      'busy': 'Already joining…',
+      'other': 'Could not join.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get syncNeededForInvites =>
+      'Sync is off. Turn it on (More → Sync) to use invite codes.';
+
+  @override
+  String get changeRole => 'Change role';
+
+  @override
+  String get tenantView =>
+      'You are a tenant here: you see your own lease and payments.';
 }

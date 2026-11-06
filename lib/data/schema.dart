@@ -112,7 +112,8 @@ const entityFields = <String, Map<String, String>>{
   'members': {
     'pubkey': 'TEXT',
     'name': 'TEXT',
-    'role': 'TEXT', // owner | member
+    'role': 'TEXT', // owner | admin | mod | user ('member' = mod), see domain/roles.dart
+    'tenant_id': 'TEXT', // for role user: the tenant row this person is
   },
 };
 
@@ -133,6 +134,15 @@ const localTables = <String, String>{
     id TEXT PRIMARY KEY, generation INTEGER, label TEXT, created_by TEXT,
     time INTEGER, auto INTEGER)''',
   'meta': 'CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)',
+  // Invite codes made on this device (never synced: the code is the secret).
+  'invites': '''CREATE TABLE IF NOT EXISTS invites (
+    code TEXT PRIMARY KEY, building_id TEXT, role TEXT, tenant_id TEXT,
+    name TEXT, created_at INTEGER, expires_at INTEGER, used_by TEXT,
+    used_at INTEGER, cancelled INTEGER DEFAULT 0)''',
+  // On a tenant's device: event sequences a manager told us are not for us,
+  // so they count as held in our sync vectors.
+  'hidden_ranges': '''CREATE TABLE IF NOT EXISTS hidden_ranges (
+    building_id TEXT, lane TEXT, from_seq INTEGER, to_seq INTEGER)''',
 };
 
 String createEntityTableSql(String table) {
@@ -149,4 +159,5 @@ const localTableAdditions = <String, Map<String, String>>{
 const entityIndexes = [
   'CREATE INDEX IF NOT EXISTS events_author ON events (building_id, author, device, seq)',
   'CREATE INDEX IF NOT EXISTS events_status ON events (status)',
+  'CREATE INDEX IF NOT EXISTS events_entity ON events (entity, entity_id)',
 ];

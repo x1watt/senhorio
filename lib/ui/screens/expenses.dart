@@ -26,11 +26,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final l = context.l;
     return Scaffold(
       appBar: AppBar(title: Text(l.expenses)),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: StaffOnly(child: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: Text(l.newExpense),
         onPressed: () => openExpenseForm(context, prefill: {'building_id': ?_building}),
-      ),
+      )),
       body: LiveFuture<(List<DbRow>, List<DbRow>, List<DbRow>)>(
         load: (a) async => (await a.q.buildings(), await a.q.categories(),
             await a.q.expenses(building: _building)),

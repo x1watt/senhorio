@@ -557,13 +557,13 @@ abstract class AppLocalizations {
   /// No description provided for @membersHelpMember.
   ///
   /// In en, this message translates to:
-  /// **'Members share this building\'s accounting. Only the owner can add or revoke members.'**
+  /// **'These people share this building. The owner and admins manage members; mods can invite tenants.'**
   String get membersHelpMember;
 
   /// No description provided for @membersHelpOwner.
   ///
   /// In en, this message translates to:
-  /// **'Add the npub of each person who shares this building. They receive all of its data over encrypted Reticulum sync.'**
+  /// **'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.'**
   String get membersHelpOwner;
 
   /// No description provided for @method.
@@ -1291,6 +1291,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download and install'**
   String get downloadAndInstall;
+
+  /// No description provided for @invite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get invite;
+
+  /// No description provided for @joinWithCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Join with a code'**
+  String get joinWithCode;
+
+  /// No description provided for @inviteCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite code'**
+  String get inviteCode;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
+  /// No description provided for @roleName.
+  ///
+  /// In en, this message translates to:
+  /// **'{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} other{Member}}'**
+  String roleName(String role);
+
+  /// No description provided for @roleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} other{}}'**
+  String roleHelp(String role);
+
+  /// No description provided for @whichTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Which tenant is this person?'**
+  String get whichTenant;
+
+  /// No description provided for @noTenantsToInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the tenant first (Tenants tab), then invite them.'**
+  String get noTenantsToInvite;
+
+  /// No description provided for @nameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get nameOptional;
+
+  /// No description provided for @inviteCodeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Give this code to the person. In the app they open Buildings → Join with a code. It works once, until {time}.'**
+  String inviteCodeHelp(String time);
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @openInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invites'**
+  String get openInvites;
+
+  /// No description provided for @cancelInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel invite'**
+  String get cancelInvite;
+
+  /// No description provided for @until.
+  ///
+  /// In en, this message translates to:
+  /// **'until {time}'**
+  String until(String time);
+
+  /// No description provided for @enterInviteCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the 4-character code you were given.'**
+  String get enterInviteCode;
+
+  /// No description provided for @joining.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for the building…'**
+  String get joining;
+
+  /// No description provided for @joined.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined {name}. Its data is arriving.'**
+  String joined(String name);
+
+  /// No description provided for @joinError.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason, select, invalid{This code is not valid.} expired{This code has expired: ask for a new one.} used{This code was already used.} self{That is your own code.} notFound{Nobody is offering this code right now. Check the code, and that the inviter\'s app is open and online.} timeout{The inviter did not answer. Try again.} busy{Already joining…} other{Could not join.}}'**
+  String joinError(String reason);
+
+  /// No description provided for @syncNeededForInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync is off. Turn it on (More → Sync) to use invite codes.'**
+  String get syncNeededForInvites;
+
+  /// No description provided for @changeRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Change role'**
+  String get changeRole;
+
+  /// No description provided for @tenantView.
+  ///
+  /// In en, this message translates to:
+  /// **'You are a tenant here: you see your own lease and payments.'**
+  String get tenantView;
 }
 
 class _AppLocalizationsDelegate

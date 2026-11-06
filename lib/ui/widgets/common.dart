@@ -147,3 +147,21 @@ class CategoryAvatar extends StatelessWidget {
     );
   }
 }
+
+/// Shows [child] unless this person only holds buildings as a tenant
+/// (who changes nothing); nothing while it is being checked.
+class StaffOnly extends StatelessWidget {
+  final Widget child;
+  const StaffOnly({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.read<AppState>();
+    final rev = context.select<Ledger, int>((l) => l.revision);
+    return FutureBuilder<bool>(
+      key: ValueKey(rev),
+      future: app.q.onlyTenant(app.identity.pubkey),
+      builder: (context, snap) => snap.data == false ? child : const SizedBox.shrink(),
+    );
+  }
+}
