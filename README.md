@@ -77,7 +77,7 @@ On the shared Pi, run builds and tests through `xbuild`.
   has no Reticulum sync (browsers have no sockets); it is for trying the UI.
 
 Android release signing: the key lives outside the repo
-(`~/.android-keys/senhorio-release.p12`, back it up: losing it means no
+(`~/.data/senhorio-release.p12`, back it up: losing it means no
 installed app can update again). Locally, `android/key.properties` (ignored
 by git) points to it. CI writes that file from the repository secrets
 `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` and
