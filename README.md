@@ -71,6 +71,13 @@ On the shared Pi, run builds and tests through `xbuild`.
   ZX SQL engine runs in a WebAssembly worker), starts with sample data and
   has no Reticulum sync (browsers have no sockets); it is for trying the UI.
 
+Android release signing: the key lives outside the repo
+(`~/.android-keys/senhorio-release.p12`, back it up: losing it means no
+installed app can update again). Locally, `android/key.properties` (ignored
+by git) points to it. CI writes that file from the repository secrets
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` and
+`ANDROID_KEY_ALIAS`, and refuses to publish a tagged release without them.
+
 The Android APK is built by GitHub Actions (`.github/workflows/android.yml`)
 on every push to `main` (download it from the run's artifacts) and is
 attached to the release when a `v*` tag is pushed.

@@ -63,6 +63,29 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+      - name: Release signing key
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            # A release signed with a throwaway key cannot update installed apps.
+            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              echo "::error::ANDROID_KEYSTORE_BASE64 is not set; refusing to publish a release"; exit 1
+            fi
+            echo "::warning::no release key: this APK is signed with a throwaway debug key"; exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          {
+            echo "storeFile=$RUNNER_TEMP/release.p12"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=${KEY_ALIAS:-senhorio}"
+            echo "storeType=pkcs12"
+          } > android/key.properties
+
       - run: flutter build apk --release
 
       - name: Rename APK
