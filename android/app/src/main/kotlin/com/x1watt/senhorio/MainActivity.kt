@@ -122,18 +122,17 @@ class MainActivity : FlutterActivity() {
 
     private fun saveToDownloads(src: java.io.File, name: String): String {
         if (Build.VERSION.SDK_INT >= 29) {
-            val store = android.provider.MediaStore.Downloads
             val values = android.content.ContentValues().apply {
-                put(store.DISPLAY_NAME, name)
-                put(store.MIME_TYPE, "application/octet-stream")
-                put(store.IS_PENDING, 1)
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name)
+                put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+                put(android.provider.MediaStore.Downloads.IS_PENDING, 1)
             }
             val resolver = applicationContext.contentResolver
-            val uri = resolver.insert(store.EXTERNAL_CONTENT_URI, values)
+            val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 ?: throw IllegalStateException("MediaStore refused the file")
             resolver.openOutputStream(uri)!!.use { out -> src.inputStream().use { it.copyTo(out) } }
             values.clear()
-            values.put(store.IS_PENDING, 0)
+            values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
             return "Download/$name"
         }
