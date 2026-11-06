@@ -47,6 +47,7 @@ something reusable.
 | `inviteToBuilding` / `showInviteCode` / `OpenInvites` / `joinWithCode` | `lib/ui/screens/invites.dart` | Invite UI: role picker, big code display, open codes list, join with progress |
 | `AttachmentList` / `AttachmentThumb` / `pickAndStoreAttachment` / `shrinkImage` (camera, gallery, file; JPEG ≤1600 px; stored by SHA-256) | `lib/ui/widgets/attachments.dart` | Any entity with photos or PDFs (receipts, ID documents) |
 | `RoomMosaic` (coloured tiles, staggered grow-in, pulsing alert) | `lib/ui/widgets/room_mosaic.dart` | Any at-a-glance status board |
+| `Backups` (export to public Downloads via MediaStore on Android / save dialog on desktop; `verify` → `stage` → `commit` restore with the previous archive kept; one pasted restore key parsed from free text) + `AppState.onRestart` / `shutdown` | `lib/platform/backup.dart`, `MainActivity.kt` (`saveToDownloads`), `lib/app_state.dart`, `lib/main.dart` | Backup/restore of any single-file database, with an in-place app restart |
 | `UpdateService` + `checkForUpdates` dialog + `installApk` channel (GitHub latest release → download → system installer) | `lib/platform/updates.dart`, `lib/ui/screens/update_dialog.dart`, `MainActivity.kt` | Self-updating Android apps published on GitHub releases |
 | `depositHeld`, `isRentPayment`, `paymentKinds` | `lib/domain/rent_schedule.dart` | Deposits/provisions kept apart from rent |
 

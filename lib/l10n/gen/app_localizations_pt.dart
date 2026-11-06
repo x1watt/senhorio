@@ -43,7 +43,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupPassword =>
-      'A cópia está cifrada. Guarde esta palavra-passe junto dela:';
+      'Chave de restauro: a sua identidade (nsec) e a palavra-passe do arquivo. Guarde-a junto da cópia, p. ex. no gestor de palavras-passe. Sem ela a cópia não abre.';
 
   @override
   String get backupSaved => 'Cópia guardada';
@@ -171,7 +171,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get exportBackup => 'Exportar cópia de segurança';
 
   @override
-  String get exportBackupHelp => 'O arquivo com todo o histórico';
+  String get exportBackupHelp =>
+      'Todo o arquivo, para um ficheiro que sobrevive à desinstalação da app';
 
   @override
   String get file => 'Ficheiro';
@@ -808,4 +809,34 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tenantView => 'É inquilino aqui: vê o seu contrato e pagamentos.';
+
+  @override
+  String get copyRestoreKey => 'Copiar chave de restauro';
+
+  @override
+  String get restoreBackup => 'Restaurar cópia de segurança';
+
+  @override
+  String get restoreBackupHelp =>
+      'Substituir os dados deste dispositivo por um ficheiro de cópia';
+
+  @override
+  String get restoreKey => 'Chave de restauro';
+
+  @override
+  String get restoreKeyHelp =>
+      'Cole a chave de restauro mostrada quando a cópia foi feita (o nsec e a palavra-passe).';
+
+  @override
+  String get restoreKeyInvalid =>
+      'A chave de restauro precisa do nsec e da palavra-passe de 64 caracteres.';
+
+  @override
+  String restoreConfirm(String file) {
+    return 'Substituir tudo neste dispositivo por $file? Os dados atuais ficam guardados como senhorio-before-restore.zx na pasta da app.';
+  }
+
+  @override
+  String get restoreFailed =>
+      'Não foi possível restaurar: palavra-passe errada, ou não é uma cópia do Senhorio.';
 }

@@ -15,6 +15,7 @@ import 'demo/demo_data.dart';
 import 'domain/checkpoints.dart';
 import 'identity/identity_service.dart';
 import 'platform/background.dart';
+import 'platform/backup.dart';
 import 'sync/sync_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -46,7 +47,7 @@ class AppState extends ChangeNotifier {
     final ids = IdentityService(keys ?? SecureKeyStore(base));
     final id = await ids.load();
     final store =
-        await ZxStore.open('$base/senhorio.zx', password: await ids.dbPassword());
+        await ZxStore.open('$base/$archiveFile', password: await ids.dbPassword());
     final ledger = Ledger(store, id, device: await ids.deviceId())..signLocal = !kIsWeb;
     await ledger.init();
     final s = AppState._(base, ids, store, ledger);
@@ -75,6 +76,26 @@ class AppState extends ChangeNotifier {
         ['locale', l?.languageCode ?? '']);
     sync.notificationText = _notificationText();
     notifyListeners();
+  }
+
+  /// Set by the root widget: boots a new state in place of this one.
+  Future<void> Function()? onRestart;
+
+  /// Stops syncing and closes the archive.
+  Future<void> shutdown() async {
+    await sync.stop();
+    await store.close();
+  }
+
+  /// Replaces the archive and the keys with a backup (checked first), then
+  /// restarts the app on it.
+  Future<void> restoreBackup(String file, {required String nsec, required String password}) async {
+    Identity.parse(nsec);
+    final staged = await Backups.stage(dataDir, file, password);
+    await shutdown();
+    await Backups.commit(dataDir, staged);
+    await identityService.installRestored(nsec: nsec, dbPassword: password);
+    await onRestart?.call();
   }
 
   Future<void> importIdentity(String nsec) async {

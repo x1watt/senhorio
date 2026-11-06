@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Installing updates downloaded from GitHub releases -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- Backups into the public Downloads folder on Android 9 and older -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
     <!-- Receipt photos -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <application

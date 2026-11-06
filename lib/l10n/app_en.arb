@@ -11,7 +11,7 @@
   "apartmentOptional": "Apartment (optional)",
   "area": "Area (m²)",
   "availableForRent": "Available for rent",
-  "backupPassword": "The backup is encrypted. Keep this password with it:",
+  "backupPassword": "Restore key: your identity (nsec) and the archive's password. Keep it with the backup, e.g. in your password manager. Without it a backup cannot be opened.",
   "backupSaved": "Backup saved",
   "building": "Building",
   "buildings": "Buildings",
@@ -52,7 +52,7 @@
   "expensesByCategory": "Expenses by category",
   "expensesThisMonth": "Expenses this month",
   "exportBackup": "Export backup",
-  "exportBackupHelp": "The archive with its whole history",
+  "exportBackupHelp": "The whole archive, to a file that survives uninstalling the app",
   "file": "File",
   "floor": "Floor",
   "frequencyLabel": "Frequency",
@@ -393,5 +393,20 @@
   },
   "syncNeededForInvites": "Sync is off. Turn it on (More → Sync) to use invite codes.",
   "changeRole": "Change role",
-  "tenantView": "You are a tenant here: you see your own lease and payments."
+  "tenantView": "You are a tenant here: you see your own lease and payments.",
+  "copyRestoreKey": "Copy restore key",
+  "restoreBackup": "Restore backup",
+  "restoreBackupHelp": "Replace this device's data with a backup file",
+  "restoreKey": "Restore key",
+  "restoreKeyHelp": "Paste the restore key shown when the backup was made (the nsec and the password).",
+  "restoreKeyInvalid": "The restore key needs the nsec and the 64-character password.",
+  "restoreConfirm": "Replace everything on this device with {file}? The current data is kept as senhorio-before-restore.zx in the app's folder.",
+  "@restoreConfirm": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreFailed": "Could not restore: wrong password, or not a Senhorio backup."
 }

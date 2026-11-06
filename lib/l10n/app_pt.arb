@@ -11,7 +11,7 @@
   "apartmentOptional": "Apartamento (opcional)",
   "area": "Área (m²)",
   "availableForRent": "Disponível para arrendar",
-  "backupPassword": "A cópia está cifrada. Guarde esta palavra-passe junto dela:",
+  "backupPassword": "Chave de restauro: a sua identidade (nsec) e a palavra-passe do arquivo. Guarde-a junto da cópia, p. ex. no gestor de palavras-passe. Sem ela a cópia não abre.",
   "backupSaved": "Cópia guardada",
   "building": "Prédio",
   "buildings": "Prédios",
@@ -52,7 +52,7 @@
   "expensesByCategory": "Despesas por categoria",
   "expensesThisMonth": "Despesas este mês",
   "exportBackup": "Exportar cópia de segurança",
-  "exportBackupHelp": "O arquivo com todo o histórico",
+  "exportBackupHelp": "Todo o arquivo, para um ficheiro que sobrevive à desinstalação da app",
   "file": "Ficheiro",
   "floor": "Andar",
   "frequencyLabel": "Periodicidade",
@@ -218,5 +218,13 @@
   "joinError": "{reason, select, invalid{Este código não é válido.} expired{Este código expirou: peça um novo.} used{Este código já foi usado.} self{Esse é o seu próprio código.} notFound{Ninguém está a oferecer este código agora. Verifique o código e se a app de quem convidou está aberta e online.} timeout{Quem convidou não respondeu. Tente de novo.} busy{Já a entrar…} other{Não foi possível entrar.}}",
   "syncNeededForInvites": "A sincronização está desligada. Ligue-a (Mais → Sincronização) para usar códigos de convite.",
   "changeRole": "Mudar função",
-  "tenantView": "É inquilino aqui: vê o seu contrato e pagamentos."
+  "tenantView": "É inquilino aqui: vê o seu contrato e pagamentos.",
+  "copyRestoreKey": "Copiar chave de restauro",
+  "restoreBackup": "Restaurar cópia de segurança",
+  "restoreBackupHelp": "Substituir os dados deste dispositivo por um ficheiro de cópia",
+  "restoreKey": "Chave de restauro",
+  "restoreKeyHelp": "Cole a chave de restauro mostrada quando a cópia foi feita (o nsec e a palavra-passe).",
+  "restoreKeyInvalid": "A chave de restauro precisa do nsec e da palavra-passe de 64 caracteres.",
+  "restoreConfirm": "Substituir tudo neste dispositivo por {file}? Os dados atuais ficam guardados como senhorio-before-restore.zx na pasta da app.",
+  "restoreFailed": "Não foi possível restaurar: palavra-passe errada, ou não é uma cópia do Senhorio."
 }

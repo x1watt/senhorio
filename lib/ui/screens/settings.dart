@@ -1,19 +1,17 @@
 import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../app_state.dart';
-import '../../core/dates.dart';
 import '../../data/zx_store.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
+import '../../platform/backup.dart';
 import '../../platform/updates.dart';
 import 'checkpoints.dart';
 import 'update_dialog.dart';
@@ -72,6 +70,12 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(l.exportBackupHelp),
           onTap: () => _exportBackup(context),
         ),
+        if (!kIsWeb) ListTile(
+          leading: const Icon(Icons.settings_backup_restore),
+          title: Text(l.restoreBackup),
+          subtitle: Text(l.restoreBackupHelp),
+          onTap: () => _restoreBackup(context),
+        ),
         ListTile(
           leading: const Icon(Icons.language),
           title: Text(l.language),
@@ -96,31 +100,87 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _exportBackup(BuildContext context) async {
     final app = context.app;
     final l = context.l;
-    final name = 'senhorio-${isoDate(DateTime.now())}.zx';
     String? target;
-    if (Platform.isAndroid || Platform.isIOS) {
-      final dir = await getDownloadsDirectory() ?? await getExternalStorageDirectory();
-      if (dir != null) target = '${dir.path}/$name';
-    } else {
-      target = (await getSaveLocation(suggestedName: name))?.path;
+    try {
+      target = await Backups.export(app.store.path);
+    } catch (e) {
+      if (context.mounted) context.toast('$e');
+      return;
     }
-    if (target == null) return;
-    await File(app.store.path).copy(target);
-    final pw = await app.identityService.dbPassword();
+    if (target == null || !context.mounted) return;
+    final key = Backups.restoreKey(app.identity.nsec, await app.identityService.dbPassword());
     if (!context.mounted) return;
     await showDialog(
       context: context,
       builder: (c) => AlertDialog(
         title: Text(l.backupSaved),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SelectableText(target!),
-          const SizedBox(height: 12),
-          Text(l.backupPassword),
-          SelectableText(pw, style: const TextStyle(fontFamily: 'monospace')),
-        ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(l.ok))],
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SelectableText(target!),
+            const SizedBox(height: 12),
+            Text(l.backupPassword),
+            const SizedBox(height: 4),
+            SelectableText(key, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+          ]),
+        ),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.copy),
+            label: Text(l.copyRestoreKey),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: key));
+              c.toast(l.copied);
+            },
+          ),
+          FilledButton(onPressed: () => Navigator.pop(c), child: Text(l.ok)),
+        ],
       ),
     );
+  }
+
+  Future<void> _restoreBackup(BuildContext context) async {
+    final app = context.app;
+    final l = context.l;
+    final file = await Backups.pick();
+    if (file == null || !context.mounted) return;
+    final ctrl = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l.restoreBackup),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.restoreKeyHelp),
+          const SizedBox(height: 12),
+          TextField(
+            controller: ctrl,
+            autofocus: true,
+            minLines: 2,
+            maxLines: 4,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            decoration: InputDecoration(labelText: l.restoreKey),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(l.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(c, ctrl.text), child: Text(l.ok)),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (text == null || !context.mounted) return;
+    final key = Backups.parseRestoreKey(text);
+    if (key == null) {
+      context.toast(l.restoreKeyInvalid);
+      return;
+    }
+    if (!await confirm(context, l.restoreConfirm(file.split(Platform.pathSeparator).last)) || !context.mounted) return;
+    final (nsec, password) = key;
+    try {
+      await app.restoreBackup(file, nsec: nsec, password: password);
+    } catch (e) {
+      if (context.mounted) context.toast(l.restoreFailed);
+      return;
+    }
   }
 }
 

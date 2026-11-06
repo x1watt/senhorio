@@ -19,7 +19,15 @@ class _Boot extends StatefulWidget {
 }
 
 class _BootState extends State<_Boot> {
-  late final Future<AppState> _boot = AppState.boot();
+  late Future<AppState> _boot = _start();
+
+  Future<AppState> _start() async {
+    final s = await AppState.boot();
+    s.onRestart = () async {
+      if (mounted) setState(() => _boot = _start());
+    };
+    return s;
+  }
 
   @override
   Widget build(BuildContext context) => FutureBuilder<AppState>(

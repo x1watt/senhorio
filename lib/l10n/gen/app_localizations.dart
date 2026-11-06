@@ -167,7 +167,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupPassword.
   ///
   /// In en, this message translates to:
-  /// **'The backup is encrypted. Keep this password with it:'**
+  /// **'Restore key: your identity (nsec) and the archive\'s password. Keep it with the backup, e.g. in your password manager. Without it a backup cannot be opened.'**
   String get backupPassword;
 
   /// No description provided for @backupSaved.
@@ -413,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportBackupHelp.
   ///
   /// In en, this message translates to:
-  /// **'The archive with its whole history'**
+  /// **'The whole archive, to a file that survives uninstalling the app'**
   String get exportBackupHelp;
 
   /// No description provided for @file.
@@ -1417,6 +1417,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You are a tenant here: you see your own lease and payments.'**
   String get tenantView;
+
+  /// No description provided for @copyRestoreKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy restore key'**
+  String get copyRestoreKey;
+
+  /// No description provided for @restoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get restoreBackup;
+
+  /// No description provided for @restoreBackupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace this device\'s data with a backup file'**
+  String get restoreBackupHelp;
+
+  /// No description provided for @restoreKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore key'**
+  String get restoreKey;
+
+  /// No description provided for @restoreKeyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the restore key shown when the backup was made (the nsec and the password).'**
+  String get restoreKeyHelp;
+
+  /// No description provided for @restoreKeyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The restore key needs the nsec and the 64-character password.'**
+  String get restoreKeyInvalid;
+
+  /// No description provided for @restoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace everything on this device with {file}? The current data is kept as senhorio-before-restore.zx in the app\'s folder.'**
+  String restoreConfirm(String file);
+
+  /// No description provided for @restoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore: wrong password, or not a Senhorio backup.'**
+  String get restoreFailed;
 }
 
 class _AppLocalizationsDelegate

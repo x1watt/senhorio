@@ -93,6 +93,18 @@ class MainActivity : FlutterActivity() {
                         result.error("install", e.message, null)
                     }
                 }
+                // Copies a file into the public Downloads folder, which an
+                // uninstall keeps (backups).
+                "saveToDownloads" -> {
+                    try {
+                        val src = java.io.File(call.argument<String>("path")!!)
+                        result.success(saveToDownloads(src, call.argument<String>("name")!!))
+                    } catch (e: SecurityException) {
+                        result.error("permission", e.message, null)
+                    } catch (e: Exception) {
+                        result.error("save", e.message, null)
+                    }
+                }
                 "requestNotifications" -> {
                     if (Build.VERSION.SDK_INT >= 33 &&
                         checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -106,6 +118,36 @@ class MainActivity : FlutterActivity() {
             }
         }
         channel = ch
+    }
+
+    private fun saveToDownloads(src: java.io.File, name: String): String {
+        if (Build.VERSION.SDK_INT >= 29) {
+            val store = android.provider.MediaStore.Downloads
+            val values = android.content.ContentValues().apply {
+                put(store.DISPLAY_NAME, name)
+                put(store.MIME_TYPE, "application/octet-stream")
+                put(store.IS_PENDING, 1)
+            }
+            val resolver = applicationContext.contentResolver
+            val uri = resolver.insert(store.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("MediaStore refused the file")
+            resolver.openOutputStream(uri)!!.use { out -> src.inputStream().use { it.copyTo(out) } }
+            values.clear()
+            values.put(store.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+            return "Download/$name"
+        }
+        // Android 9 and older: the public folder needs the storage permission.
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 8)
+            throw SecurityException("storage permission not granted yet")
+        }
+        val dir = android.os.Environment.getExternalStoragePublicDirectory(
+            android.os.Environment.DIRECTORY_DOWNLOADS)
+        dir.mkdirs()
+        return src.copyTo(java.io.File(dir, name), overwrite = true).absolutePath
     }
 
     companion object {

@@ -129,6 +129,17 @@ class IdentityService {
     return id;
   }
 
+  /// After a restore: the backup's identity and archive password, and a
+  /// fresh device id (the restored sequences must not continue a lane that
+  /// peers may already hold further ahead).
+  Future<void> installRestored({required String nsec, required String dbPassword}) async {
+    final id = Identity.parse(nsec);
+    await store.write(_kNsec, id.nsec);
+    await store.write(_kDbPassword, dbPassword);
+    await store.write(_kDevice, hexOf(randomBytes(8)));
+    identity = id;
+  }
+
   /// Id of this device (random, kept with the keys): the same npub on
   /// several devices keeps one event sequence per device.
   Future<String> deviceId() async {

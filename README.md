@@ -48,7 +48,12 @@ Android and desktop (Linux, Windows, macOS).
   - **Checkpoints** show everything added, changed or deleted since then,
     and by whom, with one-tap restore.
   - An automatic checkpoint is taken daily.
-  - The backup export copies the whole history.
+  - **Backup and restore** (More → Export backup / Restore backup): the
+    whole archive with its history goes to the phone's Downloads folder
+    (or a chosen file on desktop), which uninstalling the app keeps. The
+    export shows a *restore key* (your nsec and the archive's password):
+    keep it with the file, e.g. in a password manager. Restoring on a
+    fresh install brings back the data and the identity.
 - Portuguese and English; dark (black) theme.
 - **Updates:** the app checks GitHub releases once a day; on Android it
   downloads the new APK and opens the installer.

@@ -43,7 +43,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPassword =>
-      'The backup is encrypted. Keep this password with it:';
+      'Restore key: your identity (nsec) and the archive\'s password. Keep it with the backup, e.g. in your password manager. Without it a backup cannot be opened.';
 
   @override
   String get backupSaved => 'Backup saved';
@@ -171,7 +171,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportBackup => 'Export backup';
 
   @override
-  String get exportBackupHelp => 'The archive with its whole history';
+  String get exportBackupHelp =>
+      'The whole archive, to a file that survives uninstalling the app';
 
   @override
   String get file => 'File';
@@ -809,4 +810,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tenantView =>
       'You are a tenant here: you see your own lease and payments.';
+
+  @override
+  String get copyRestoreKey => 'Copy restore key';
+
+  @override
+  String get restoreBackup => 'Restore backup';
+
+  @override
+  String get restoreBackupHelp =>
+      'Replace this device\'s data with a backup file';
+
+  @override
+  String get restoreKey => 'Restore key';
+
+  @override
+  String get restoreKeyHelp =>
+      'Paste the restore key shown when the backup was made (the nsec and the password).';
+
+  @override
+  String get restoreKeyInvalid =>
+      'The restore key needs the nsec and the 64-character password.';
+
+  @override
+  String restoreConfirm(String file) {
+    return 'Replace everything on this device with $file? The current data is kept as senhorio-before-restore.zx in the app\'s folder.';
+  }
+
+  @override
+  String get restoreFailed =>
+      'Could not restore: wrong password, or not a Senhorio backup.';
 }
