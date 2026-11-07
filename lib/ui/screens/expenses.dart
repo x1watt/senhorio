@@ -11,6 +11,7 @@ import '../../domain/category_learner.dart';
 import '../forms.dart';
 import '../widgets/attachments.dart';
 import '../widgets/common.dart';
+import 'shared_bills.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -215,6 +216,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
       'quantity': double.tryParse(_qty.text.replaceAll(',', '.')),
       'unit': _category?['unit'],
       'recurring_bill_id': _v['recurring_bill_id'],
+      'shared_bill_id': _v['shared_bill_id'],
       'paid_by': _v['paid_by'] ?? app.identity.pubkey,
       'attachments': _files,
     };
@@ -243,6 +245,27 @@ class _ExpenseFormState extends State<ExpenseForm> {
       appBar: AppBar(
         title: Text(widget.expense == null ? l.newExpense : l.expense),
         actions: [
+          // An expense the tenants should share: make the bill from it.
+          if (widget.expense != null && widget.expense!['shared_bill_id'] == null)
+            IconButton(
+              icon: const Icon(Icons.call_split),
+              tooltip: l.splitBetweenTenants,
+              onPressed: () async {
+                final e = widget.expense!;
+                final bill = await newSharedBill(context, e['building_id'] as String, prefill: {
+                  'title': e['vendor'] ?? e['description'],
+                  'amount_cents': e['amount_cents'],
+                  'apartment_id': e['apartment_id'] ?? '',
+                  'description': e['description'],
+                  'attachments': _attachments(e),
+                });
+                if (bill != null && context.mounted) {
+                  await guarded(context, () => app.ledger.upsert('expenses', e['building_id'] as String,
+                      {'shared_bill_id': bill}, id: e['id'] as String));
+                  if (context.mounted) Navigator.pop(context);
+                }
+              },
+            ),
           if (widget.expense != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
@@ -260,6 +283,16 @@ class _ExpenseFormState extends State<ExpenseForm> {
       body: Form(
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
+          if (_v['shared_bill_id'] != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ActionChip(
+                avatar: const Icon(Icons.call_split, size: 18),
+                label: Text(l.linkedSharedBill),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => SharedBillScreen(billId: _v['shared_bill_id'] as String))),
+              ),
+            ),
           TextFormField(
             controller: _amount,
             autofocus: widget.expense == null,

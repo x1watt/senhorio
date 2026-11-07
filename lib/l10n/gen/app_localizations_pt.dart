@@ -1126,4 +1126,21 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get detailsLockedTenant =>
       'Os seus dados e documentos foram aprovados pelos gestores: peça-lhes qualquer alteração.';
+
+  @override
+  String get splitBetweenTenants => 'Dividir pelos inquilinos';
+
+  @override
+  String get linkedSharedBill => 'Partilhada com os inquilinos: abrir a conta';
+
+  @override
+  String get registerAsExpense => 'Registar como despesa do prédio';
+
+  @override
+  String get linkedExpense => 'Despesa do prédio';
+
+  @override
+  String recoveredOfTotal(String recovered, String total) {
+    return 'Devolvido pelos inquilinos: $recovered de $total';
+  }
 }

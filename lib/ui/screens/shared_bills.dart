@@ -16,6 +16,7 @@ import '../widgets/attachments.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
 import '../forms.dart';
+import 'expenses.dart';
 
 List<String> billAttachments(DbRow b) {
   final s = b['attachments'] as String?;
@@ -71,11 +72,13 @@ Future<List<DbRow>> currentTenants(BuildContext context, String building, String
 }
 
 /// The form of a new shared bill, the group preview, and the split.
-Future<void> newSharedBill(BuildContext context, String building) async {
+/// Returns the bill's id (null when cancelled). [prefill] may carry an
+/// expense's title, amount, apartment and attachments.
+Future<String?> newSharedBill(BuildContext context, String building, {Map<String, Object?> prefill = const {}}) async {
   final l = context.l;
   final app = context.app;
   final apts = await app.q.apartments(building);
-  if (!context.mounted) return;
+  if (!context.mounted) return null;
   final values = await showEntityForm(context, title: l.newSharedBill, fields: [
     FieldSpec('title', l.title, required: true, hint: l.sharedBillTitleHint),
     FieldSpec('amount_cents', l.totalAmount, type: FieldType.money, required: true),
@@ -83,26 +86,32 @@ Future<void> newSharedBill(BuildContext context, String building) async {
     FieldSpec('apartment_id', l.whoShares, type: FieldType.choice, required: true,
         options: {'': l.allTenantsOfBuilding, ...optionsOf(apts, (r) => l.tenantsOfApartment(r['name'] as String? ?? ''))}),
     FieldSpec('description', l.description, type: FieldType.multiline),
-  ], initial: {'due_date': isoDate(DateTime.now().add(const Duration(days: 14))), 'apartment_id': ''});
-  if (values == null || !context.mounted) return;
+  ], initial: {
+    'due_date': isoDate(DateTime.now().add(const Duration(days: 14))),
+    'apartment_id': '',
+    for (final e in prefill.entries) if (e.value != null) e.key: e.value,
+  });
+  if (values == null || !context.mounted) return null;
   final apt = (values['apartment_id'] as String?)?.isEmpty ?? true ? null : values['apartment_id'] as String;
   final group = await currentTenants(context, building, apt);
-  if (!context.mounted) return;
+  if (!context.mounted) return null;
   if (group.isEmpty) {
     context.toast(l.noTenantsInGroup);
-    return;
+    return null;
   }
   final chosen = await showDialog<List<DbRow>>(
     context: context,
     builder: (c) => _GroupDialog(tenants: group, total: (values['amount_cents'] as int?) ?? 0),
   );
-  if (chosen == null || chosen.isEmpty || !context.mounted) return;
+  if (chosen == null || chosen.isEmpty || !context.mounted) return null;
   final parts = splitEvenly((values['amount_cents'] as int?) ?? 0, chosen.length);
   final billId = newId();
+  var ok = false;
   await guarded(context, () => app.ledger.batch([
         (entity: 'shared_bills', building: building, id: billId, op: 'upsert', fields: {
           ...values,
           'apartment_id': apt,
+          if (prefill['attachments'] is List) 'attachments': prefill['attachments'],
         }),
         for (var i = 0; i < chosen.length; i++)
           (entity: 'bill_shares', building: building, id: newId(), op: 'upsert', fields: {
@@ -111,7 +120,8 @@ Future<void> newSharedBill(BuildContext context, String building) async {
             'amount_cents': parts[i],
             'status': 'open',
           }),
-      ]));
+      ]).then((_) => ok = true));
+  return ok ? billId : null;
 }
 
 class _GroupDialog extends StatefulWidget {
@@ -230,10 +240,10 @@ class SharedBillScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l;
-    return LiveFuture<(DbRow?, _BillsData?, Role?)>(
+    return LiveFuture<(DbRow?, _BillsData?, Role?, DbRow?)>(
       load: (a) async {
         final b = await a.q.byId('shared_bills', billId);
-        if (b == null) return (null, null, null);
+        if (b == null) return (null, null, null, null);
         final bid = b['building_id'] as String;
         final role = await a.ledger.myRole(bid);
         return (
@@ -241,10 +251,11 @@ class SharedBillScreen extends StatelessWidget {
           _BillsData(const [], await a.q.billShares(bill: billId), await a.q.tenants(bid),
               (role?.isStaff ?? false) ? null : await a.q.myTenantId(bid, a.identity.pubkey)),
           role,
+          (role?.isStaff ?? false) ? await a.q.expenseOfBill(billId) : null,
         );
       },
       builder: (context, d) {
-        final (b, data, role) = d;
+        final (b, data, role, expense) = d;
         if (b == null || b['deleted'] == 1 || data == null) {
           return Scaffold(appBar: AppBar(), body: EmptyState(Icons.delete, l.deleted));
         }
@@ -289,6 +300,39 @@ class SharedBillScreen extends StatelessWidget {
               shas: billAttachments(b),
               onChanged: !staff ? null : (list) => guarded(context, () => context.app.ledger.upsert('shared_bills', bid, {'attachments': list}, id: billId)),
             ),
+            // The building's side: the bill as an expense, and what the
+            // tenants gave back so far.
+            if (staff) ...[
+              const SizedBox(height: 12),
+              if (expense == null)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.receipt_long),
+                  label: Text(l.registerAsExpense),
+                  onPressed: () => openExpenseForm(context, prefill: {
+                    'building_id': bid,
+                    'apartment_id': b['apartment_id'],
+                    'amount_cents': b['amount_cents'],
+                    'vendor': b['title'],
+                    'description': b['description'],
+                    'date': b['due_date'] ?? todayIso(),
+                    'attachments': b['attachments'],
+                    'shared_bill_id': billId,
+                  }),
+                )
+              else
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.receipt_long),
+                  title: Text(l.linkedExpense),
+                  subtitle: Text('${expense['date']} · ${context.money(expense['amount_cents'] as int?)}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => openExpenseForm(context, expense: expense),
+                ),
+              Text(l.recoveredOfTotal(
+                  context.money(data.shares.where((s) => s['status'] == 'confirmed').fold<int>(0, (a, s) => a + ((s['amount_cents'] as int?) ?? 0))),
+                  context.money(b['amount_cents'] as int?)),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
             const Divider(height: 32),
             Text(data.myTenantId == null ? l.shares : l.yourShare, style: Theme.of(context).textTheme.titleSmall),
             for (final s in shares) _shareTile(context, b, s, tenants[s['tenant_id']], staff, data.myTenantId != null, today),

@@ -47,7 +47,9 @@ Android and desktop (Linux, Windows, macOS).
   tenants, or the whole building's) and the amount is split evenly. Each
   tenant marks their part "I have paid"; a manager confirms it, after
   which the tenant can no longer touch it. Payments to confirm show on
-  the dashboard.
+  the dashboard. A shared bill can be registered as an expense of the
+  building in one tap (and an expense can be split between the tenants),
+  the two stay linked, and the bill shows how much the tenants paid back.
 - **Tenant details approval:** once a manager approves a tenant's
   details (lease card → "Approve the tenant's details"), the tenant can
   no longer change or erase them; only managers can.

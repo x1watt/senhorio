@@ -429,5 +429,20 @@
   "overdueHelp": "Acerte com os gestores; este aviso desaparece quando registarem o pagamento.",
   "approveDetails": "Aprovar os dados do inquilino",
   "detailsLockedStaff": "Dados aprovados (toque para desbloquear)",
-  "detailsLockedTenant": "Os seus dados e documentos foram aprovados pelos gestores: peça-lhes qualquer alteração."
+  "detailsLockedTenant": "Os seus dados e documentos foram aprovados pelos gestores: peça-lhes qualquer alteração.",
+  "splitBetweenTenants": "Dividir pelos inquilinos",
+  "linkedSharedBill": "Partilhada com os inquilinos: abrir a conta",
+  "registerAsExpense": "Registar como despesa do prédio",
+  "linkedExpense": "Despesa do prédio",
+  "recoveredOfTotal": "Devolvido pelos inquilinos: {recovered} de {total}",
+  "@recoveredOfTotal": {
+    "placeholders": {
+      "recovered": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  }
 }

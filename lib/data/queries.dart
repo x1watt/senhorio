@@ -139,6 +139,10 @@ class Queries {
     return s.query('SELECT * FROM bill_shares WHERE ${where.join(' AND ')}', [?bill, ?tenant, ?building]);
   }
 
+  /// The expense registered for shared bill [bill], if any.
+  Future<DbRow?> expenseOfBill(String bill) =>
+      s.first('SELECT * FROM expenses WHERE shared_bill_id = ? AND $_live ORDER BY date DESC', [bill]);
+
   /// The tenant row [me] is, in [building] (null: not a tenant there).
   Future<String?> myTenantId(String building, String me) async =>
       (await s.first('SELECT tenant_id FROM members WHERE id = ? AND $_live', ['$building:$me']))?['tenant_id'] as String?;

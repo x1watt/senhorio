@@ -1921,6 +1921,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your details and documents were approved by the managers: ask them to change anything.'**
   String get detailsLockedTenant;
+
+  /// No description provided for @splitBetweenTenants.
+  ///
+  /// In en, this message translates to:
+  /// **'Split between the tenants'**
+  String get splitBetweenTenants;
+
+  /// No description provided for @linkedSharedBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with the tenants: open the bill'**
+  String get linkedSharedBill;
+
+  /// No description provided for @registerAsExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Register as an expense of the building'**
+  String get registerAsExpense;
+
+  /// No description provided for @linkedExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense of the building'**
+  String get linkedExpense;
+
+  /// No description provided for @recoveredOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back by the tenants: {recovered} of {total}'**
+  String recoveredOfTotal(String recovered, String total);
 }
 
 class _AppLocalizationsDelegate

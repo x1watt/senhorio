@@ -611,5 +611,20 @@
   "overdueHelp": "Settle with the managers; this warning goes away once they register the payment.",
   "approveDetails": "Approve the tenant's details",
   "detailsLockedStaff": "Details approved (tap to unlock)",
-  "detailsLockedTenant": "Your details and documents were approved by the managers: ask them to change anything."
+  "detailsLockedTenant": "Your details and documents were approved by the managers: ask them to change anything.",
+  "splitBetweenTenants": "Split between the tenants",
+  "linkedSharedBill": "Shared with the tenants: open the bill",
+  "registerAsExpense": "Register as an expense of the building",
+  "linkedExpense": "Expense of the building",
+  "recoveredOfTotal": "Paid back by the tenants: {recovered} of {total}",
+  "@recoveredOfTotal": {
+    "placeholders": {
+      "recovered": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  }
 }

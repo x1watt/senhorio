@@ -92,6 +92,7 @@ const entityFields = <String, Map<String, String>>{
     'quantity': 'REAL',
     'unit': 'TEXT',
     'recurring_bill_id': 'TEXT',
+    'shared_bill_id': 'TEXT', // the shared bill this expense is the payment of
     'paid_by': 'TEXT',
     'attachments': 'TEXT', // JSON list of sha256 (table attachments)
   },

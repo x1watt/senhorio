@@ -1127,4 +1127,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get detailsLockedTenant =>
       'Your details and documents were approved by the managers: ask them to change anything.';
+
+  @override
+  String get splitBetweenTenants => 'Split between the tenants';
+
+  @override
+  String get linkedSharedBill => 'Shared with the tenants: open the bill';
+
+  @override
+  String get registerAsExpense => 'Register as an expense of the building';
+
+  @override
+  String get linkedExpense => 'Expense of the building';
+
+  @override
+  String recoveredOfTotal(String recovered, String total) {
+    return 'Paid back by the tenants: $recovered of $total';
+  }
 }
