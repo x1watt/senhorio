@@ -168,7 +168,11 @@ class Ledger extends ChangeNotifier {
         }
         final le = LedgerEvent.parse(e)!;
         final st = await _apply(le);
-        if (st == EventStatus.rejected) {
+        // A tenant or worker writing about a row this device does not hold
+        // (pending) is as refused as a rejection; others may legitimately
+        // write before their membership arrives.
+        if (st == EventStatus.rejected ||
+            (st == EventStatus.pending && ((await myRole(c.building))?.isPartial ?? false))) {
           throw StateError('not allowed to change ${c.entity} here');
         }
         created.add(le);
@@ -252,11 +256,18 @@ class Ledger extends ChangeNotifier {
   /// null = allowed; pending = author not (yet) known as a member.
   Future<EventStatus?> _authorize(LedgerEvent e) async {
     if (e.building == globalBuilding) {
+      if (e.entity == 'profiles') {
+        // Only its own pubkey writes a profile; from anyone we share a
+        // building with (any role).
+        if (e.entityId != e.author || e.op != 'upsert') return EventStatus.rejected;
+        if (e.author == me) return null;
+        return await _knownPerson(e.author) ? null : EventStatus.pending;
+      }
       if (e.entity != 'categories') return EventStatus.rejected;
       if (e.author == me) return null;
       // Shared categories come from the people who manage some building.
       final n = await store.scalar(
-          "SELECT count(*) FROM members WHERE pubkey = ? AND deleted = 0 AND (role IS NULL OR role != 'user')",
+          "SELECT count(*) FROM members WHERE pubkey = ? AND deleted = 0 AND (role IS NULL OR role NOT IN ('user', 'worker'))",
           [e.author]);
       return (n as int) > 0 ? null : EventStatus.pending;
     }
@@ -299,7 +310,42 @@ class Ledger extends ChangeNotifier {
     if (e.entity == 'buildings' && e.op == 'delete') {
       return r.canDeleteBuilding ? null : EventStatus.rejected;
     }
+    if (r == Role.user) return _tenantOwnRow(e);
+    if (r == Role.worker) return _workerOwnTask(e);
     return r.canWrite(e.entity) ? null : EventStatus.rejected;
+  }
+
+  /// Someone who is a member of, or owns, a building we hold.
+  Future<bool> _knownPerson(String pubkey) async {
+    final n = await store.scalar(
+        'SELECT (SELECT count(*) FROM members WHERE pubkey = ? AND deleted = 0) + '
+        '(SELECT count(*) FROM buildings WHERE owner = ? AND deleted = 0)',
+        [pubkey, pubkey]) as int;
+    return n > 0;
+  }
+
+  /// A tenant changes only the contact fields and documents of the tenant
+  /// row their membership points at.
+  Future<EventStatus?> _tenantOwnRow(LedgerEvent e) async {
+    if (e.entity != 'tenants' || e.op != 'upsert') return EventStatus.rejected;
+    final m = await store.first(
+        'SELECT tenant_id FROM members WHERE id = ?', ['${e.building}:${e.author}']);
+    if (m == null || m['tenant_id'] != e.entityId) return EventStatus.rejected;
+    if (e.fields.keys.any((f) => !tenantOwnFields.contains(f))) return EventStatus.rejected;
+    return null;
+  }
+
+  /// A worker marks a task given to them as done (photos, note); nothing
+  /// else. The task must be known first (its creation may still be on the
+  /// way: pending).
+  Future<EventStatus?> _workerOwnTask(LedgerEvent e) async {
+    if (e.entity != 'tasks' || e.op != 'upsert') return EventStatus.rejected;
+    final t = await store.first('SELECT assignee, deleted FROM tasks WHERE id = ?', [e.entityId]);
+    if (t == null) return EventStatus.pending;
+    if (t['deleted'] == 1 || t['assignee'] != e.author) return EventStatus.rejected;
+    if (e.fields.keys.any((f) => !workerTaskFields.contains(f))) return EventStatus.rejected;
+    if (e.fields.containsKey('status') && e.fields['status'] != 'done') return EventStatus.rejected;
+    return null;
   }
 
   static const _revoked = '-';

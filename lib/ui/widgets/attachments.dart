@@ -25,7 +25,7 @@ Uint8List shrinkImage(Uint8List bytes) {
 
 /// Lets the user take or pick a photo (or a file) and stores it; returns
 /// the SHA-256, or null when cancelled.
-Future<String?> pickAndStoreAttachment(BuildContext context, {ImageSource? source}) async {
+Future<String?> pickAndStoreAttachment(BuildContext context, {ImageSource? source, bool imagesOnly = false}) async {
   Uint8List? bytes;
   var mime = 'image/jpeg';
   if (source != null) {
@@ -35,7 +35,7 @@ Future<String?> pickAndStoreAttachment(BuildContext context, {ImageSource? sourc
   } else {
     final f = await openFile(acceptedTypeGroups: [
       const XTypeGroup(label: 'images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic']),
-      const XTypeGroup(label: 'pdf', extensions: ['pdf']),
+      if (!imagesOnly) const XTypeGroup(label: 'pdf', extensions: ['pdf']),
     ]);
     if (f == null) return null;
     bytes = await f.readAsBytes();
@@ -47,6 +47,108 @@ Future<String?> pickAndStoreAttachment(BuildContext context, {ImageSource? sourc
 }
 
 bool get _hasCamera => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+/// Asks where a photo comes from (camera, gallery, file) and stores it;
+/// returns the SHA-256, or null when cancelled.
+Future<String?> pickPhoto(BuildContext context) async {
+  final l = context.l;
+  if (!_hasCamera) return pickAndStoreAttachment(context, imagesOnly: true);
+  final source = await showModalBottomSheet<ImageSource?>(
+    context: context,
+    builder: (c) => SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        ListTile(leading: const Icon(Icons.photo_camera), title: Text(l.camera),
+            onTap: () => Navigator.pop(c, ImageSource.camera)),
+        ListTile(leading: const Icon(Icons.photo_library), title: Text(l.gallery),
+            onTap: () => Navigator.pop(c, ImageSource.gallery)),
+      ]),
+    ),
+  );
+  if (source == null || !context.mounted) return null;
+  return pickAndStoreAttachment(context, source: source, imagesOnly: true);
+}
+
+/// The stored image [sha] (a placeholder [icon] while it is missing).
+class StoredImage extends StatelessWidget {
+  final String? sha;
+  final IconData icon;
+  final BoxFit fit;
+  const StoredImage({super.key, required this.sha, required this.icon, this.fit = BoxFit.cover});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = sha;
+    if (s == null || s.isEmpty) return Icon(icon, color: Theme.of(context).colorScheme.outline);
+    return FutureBuilder<Uint8List?>(
+      future: context.app.q.attachment(s),
+      builder: (context, snap) => snap.data == null
+          ? Icon(icon, color: Theme.of(context).colorScheme.outline)
+          : Image.memory(snap.data!, fit: fit, width: double.infinity, height: double.infinity,
+              gaplessPlayback: true),
+    );
+  }
+}
+
+/// A round picture (a building, an apartment, a room, a person).
+class PhotoAvatar extends StatelessWidget {
+  final String? sha;
+  final IconData icon;
+  final double radius;
+  const PhotoAvatar({super.key, required this.sha, required this.icon, this.radius = 20});
+
+  @override
+  Widget build(BuildContext context) => CircleAvatar(
+        radius: radius,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: ClipOval(
+          child: SizedBox(width: radius * 2, height: radius * 2,
+              child: StoredImage(sha: sha, icon: icon)),
+        ),
+      );
+}
+
+/// A wide presentation picture at the top of a screen, with a button to
+/// change it when [onChange] is given.
+class PhotoBanner extends StatelessWidget {
+  final String? sha;
+  final IconData icon;
+  final Future<void> Function(String sha)? onChange;
+  const PhotoBanner({super.key, required this.sha, required this.icon, this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final empty = sha == null || sha!.isEmpty;
+    if (empty && onChange == null) return const SizedBox.shrink();
+    return SizedBox(
+      height: empty ? 72 : 200,
+      child: Stack(fit: StackFit.expand, children: [
+        Container(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          alignment: Alignment.center,
+          child: StoredImage(sha: sha, icon: icon),
+        ),
+        if (onChange != null)
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: FilledButton.tonalIcon(
+              icon: const Icon(Icons.add_a_photo, size: 18),
+              label: Text(empty ? l.addPhoto : l.changePhoto),
+              onPressed: () async {
+                final s = await pickPhoto(context);
+                if (s != null) await onChange!(s);
+              },
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
+/// Saves a new presentation photo on [table] row [id].
+Future<void> setEntityPhoto(BuildContext context, String table, String building, String id, String sha) =>
+    guarded(context, () => context.app.ledger.upsert(table, building, {'photo': sha}, id: id));
 
 /// Thumbnails of [shas] plus the buttons to add more; [onChanged] gets the
 /// new list. Read-only when [onChanged] is null.

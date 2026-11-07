@@ -35,7 +35,7 @@ Future<void> inviteToBuilding(BuildContext context, String building, {String? te
     context: context,
     builder: (_) => _InviteDialog(
         grant: grant, tenants: tenants, tenantId: tenantId,
-        initialRole: tenantId != null ? Role.user : grant.last),
+        initialRole: tenantId != null ? Role.user : (grant.contains(Role.mod) ? Role.mod : grant.first)),
   );
   if (choice == null || !context.mounted) return;
   final (role, tenant, name) = choice;

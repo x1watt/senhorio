@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:senhorio/data/ledger.dart';
@@ -132,6 +133,79 @@ void main() {
     expect((await carol.q.rooms(b)).map((r) => r['id']).toSet(), {r1, r2});
     expect((await carol.q.tenants(b)).map((t) => t['name']), ['Ana']);
 
+    // alice and carol say who they are: each sees the other's profile
+    final pic = await alice.q.putAttachment(Uint8List.fromList(List.generate(300, (i) => i % 7)), 'image/jpeg');
+    await alice.l.upsert('profiles', '', {'name': 'Alice', 'photo': pic}, id: alice.id.pubkey);
+    await carol.l.upsert('profiles', '', {'name': 'Ana C.'}, id: carol.id.pubkey);
+    await expectLater(() => carol.l.upsert('profiles', '', {'name': 'x'}, id: alice.id.pubkey), throwsStateError);
+    await alice.l.upsert('categories', '', {'name': 'Secret'});
+    await wire.settle();
+    expect((await carol.q.profile(alice.id.pubkey))?['name'], 'Alice');
+    expect(await carol.q.hasAttachment(pic), isTrue);
+    expect((await alice.q.profile(carol.id.pubkey))?['name'], 'Ana C.');
+    expect((await bob.q.profile(carol.id.pubkey))?['name'], 'Ana C.');
+    expect((await carol.q.categories()).where((c) => c['name'] == 'Secret'), isEmpty);
+    expect((await bob.q.categories()).where((c) => c['name'] == 'Secret'), isNotEmpty);
+    // the people helper: nickname (local) > profile > member name
+    await alice.q.setNickname(carol.id.pubkey, 'Ana do Q1');
+    final people = await alice.q.people();
+    expect(people[carol.id.pubkey]!.name, 'Ana do Q1');
+    expect(people[alice.id.pubkey]!.photo, pic);
+    expect((await carol.q.people())[carol.id.pubkey]!.name, 'Ana C.');
+    expect((await bob.q.people())[carol.id.pubkey]!.name, 'Ana C.');
+
+    // carol keeps her own contacts and documents, nothing else
+    final doc = await carol.q.putAttachment(Uint8List.fromList(List.generate(400, (i) => i % 5)), 'image/jpeg');
+    await carol.l.upsert('tenants', b, {'phone': '999', 'id_documents': [doc]}, id: ana);
+    await expectLater(() => carol.l.upsert('tenants', b, {'name': 'Other'}, id: ana), throwsStateError);
+    await expectLater(() => carol.l.upsert('tenants', b, {'phone': '1'}, id: rui), throwsStateError);
+    await wire.settle();
+    expect((await alice.q.byId('tenants', ana))!['phone'], '999');
+    expect(await alice.q.hasAttachment(doc), isTrue);
+
+    // a worker: sees only the tasks given to them, and marks them done
+    final forWorker = await bob.inv.create(b, Role.worker, name: 'Cleaner');
+    final wendy = await peer('wendy');
+    await wendy.inv.join(forWorker.code, failAfter: Duration.zero);
+    await wire.settle();
+    expect(await wendy.l.myRole(b), Role.worker);
+    final task = await alice.l.upsert('tasks', b, {
+      'title': 'Stairs', 'place': 'Stairs', 'assignee': wendy.id.pubkey, 'status': 'open',
+      'starts_at': '2026-11-10T09:00', 'ends_at': '2026-11-10T11:00',
+    });
+    final other = await alice.l.upsert('tasks', b, {'title': 'Garden', 'assignee': dave.id.pubkey, 'status': 'open'});
+    await wire.settle();
+    expect((await wendy.q.buildings()).single['name'], 'Rua A');
+    expect((await wendy.q.tasks()).map((t) => t['id']), [task]);
+    expect(await wendy.q.tenants(b), isEmpty);
+    expect(await wendy.q.leases(building: b), isEmpty);
+    expect(await wendy.q.rooms(b), isEmpty);
+    expect(await wendy.q.expenses(), isEmpty);
+    expect((await wendy.q.members(b)).map((m) => m['role']).toSet(), {'owner', 'mod', 'worker'});
+    expect((await wendy.q.profile(alice.id.pubkey))?['name'], 'Alice');
+    expect(await wendy.q.profile(carol.id.pubkey), isNull);
+    expect((await wendy.q.categories()).where((c) => c['name'] == 'Secret'), isEmpty);
+    final proof = await wendy.q.putAttachment(Uint8List.fromList(List.generate(500, (i) => i % 3)), 'image/jpeg');
+    await wendy.l.upsert('tasks', b, {'status': 'done', 'photos': [proof], 'done_at': '2026-11-10T10:50'}, id: task);
+    await expectLater(() => wendy.l.upsert('tasks', b, {'title': 'Mine'}, id: task), throwsStateError);
+    await expectLater(() => wendy.l.upsert('tasks', b, {'status': 'approved'}, id: task), throwsStateError);
+    await expectLater(() => wendy.l.upsert('tasks', b, {'status': 'done'}, id: other), throwsStateError);
+    await expectLater(() => wendy.l.upsert('tasks', b, {'title': 'New', 'assignee': wendy.id.pubkey}), throwsStateError);
+    await expectLater(() => wendy.l.upsert('expenses', b, {'amount_cents': 1}), throwsStateError);
+    await wire.settle();
+    expect((await alice.q.byId('tasks', task))!['status'], 'done');
+    expect(await alice.q.hasAttachment(proof), isTrue);
+    await bob.l.upsert('tasks', b, {'status': 'approved', 'reviewed_by': bob.id.pubkey}, id: task);
+    await wire.settle();
+    expect((await wendy.q.byId('tasks', task))!['status'], 'approved');
+    // no gaps left to re-ask
+    final before2 = alice.e.stats.eventsOut + bob.e.stats.eventsOut;
+    await wendy.e.syncWith(alice.id.pubkey);
+    await wendy.e.syncWith(bob.id.pubkey);
+    await wire.settle();
+    expect(alice.e.stats.eventsOut + bob.e.stats.eventsOut, before2);
+    await wendy.s.close();
+
     // expired codes are refused
     final late = await alice.inv.create(b, Role.admin);
     alice.inv.now = () => DateTime.now().add(const Duration(hours: 25));
@@ -144,6 +218,8 @@ void main() {
     await dave.inv.join(adm.code, failAfter: Duration.zero);
     await wire.settle();
     expect(await dave.l.myRole(b), Role.admin);
+    expect(roleOf('worker'), Role.worker);
+    expect(Role.mod.canGrant, [Role.user, Role.worker]);
     await expectLater(() => bob.l.delete('members', b, '$b:${dave.id.pubkey}'), throwsStateError);
     await expectLater(() => dave.l.delete('members', b, '$b:${alice.id.pubkey}'), throwsStateError);
     await bob.l.delete('members', b, '$b:${carol.id.pubkey}');

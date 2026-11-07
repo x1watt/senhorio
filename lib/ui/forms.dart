@@ -49,6 +49,14 @@ List<FieldSpec> tenantFields(AppLocalizations l) => [
       FieldSpec('notes', l.notes, type: FieldType.multiline),
     ];
 
+/// What a tenant may change about themselves (see schema.tenantOwnFields).
+List<FieldSpec> tenantOwnFieldSpecs(AppLocalizations l) => [
+      FieldSpec('phone', l.phone),
+      FieldSpec('phone2', l.phone2),
+      FieldSpec('email', l.email),
+      FieldSpec('emergency_contact', l.emergencyContact, hint: l.emergencyContactHint),
+    ];
+
 List<FieldSpec> leaseFields(AppLocalizations l, List<DbRow> tenants) => [
       FieldSpec('tenant_id', l.tenant,
           type: FieldType.choice, options: optionsOf(tenants, (r) => r['name'] as String? ?? ''),

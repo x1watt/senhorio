@@ -106,16 +106,61 @@ class Queries {
           .map((r) => r['pubkey'] as String)
           .toSet();
 
-  /// True when [me] holds buildings only as a tenant (role user).
+  /// Buildings where [pubkey] is staff (owner, admin or mod).
+  Future<int> staffBuildings(String pubkey) async => await s.scalar(
+      "SELECT count(*) FROM buildings b WHERE b.deleted = 0 AND (b.owner = ? OR EXISTS ("
+      "SELECT 1 FROM members m WHERE m.id = b.id || ':' || ? AND m.deleted = 0 "
+      "AND (m.role IS NULL OR m.role NOT IN ('user', 'worker'))))",
+      [pubkey, pubkey]) as int;
+
+  /// True when [me] holds buildings only as a tenant or a worker.
   Future<bool> onlyTenant(String me) async {
     final total = await s.scalar('SELECT count(*) FROM buildings WHERE $_live') as int;
     if (total == 0) return false;
-    final staff = await s.scalar(
-        "SELECT count(*) FROM buildings b WHERE b.deleted = 0 AND (b.owner = ? OR EXISTS ("
-        "SELECT 1 FROM members m WHERE m.id = b.id || ':' || ? AND m.deleted = 0 "
-        "AND (m.role IS NULL OR m.role != 'user')))",
-        [me, me]) as int;
-    return staff == 0;
+    return await staffBuildings(me) == 0;
+  }
+
+  // ---------------------------------------------------------------- tasks
+
+  Future<List<DbRow>> tasks({String? building, String? assignee}) {
+    final where = [_live, if (building != null) 'building_id = ?', if (assignee != null) 'assignee = ?'];
+    return s.query('SELECT * FROM tasks WHERE ${where.join(' AND ')} ORDER BY starts_at DESC',
+        [?building, ?assignee]);
+  }
+
+  // --------------------------------------------------------------- people
+
+  Future<DbRow?> profile(String pubkey) => s.first('SELECT * FROM profiles WHERE id = ?', [pubkey]);
+
+  Future<Map<String, String>> nicknames() async => {
+        for (final r in await s.query('SELECT pubkey, nickname FROM nicknames'))
+          r['pubkey'] as String: r['nickname'] as String,
+      };
+
+  Future<void> setNickname(String pubkey, String? nickname) => nickname == null || nickname.trim().isEmpty
+      ? s.exec('DELETE FROM nicknames WHERE pubkey = ?', [pubkey])
+      : s.exec('INSERT OR REPLACE INTO nicknames (pubkey, nickname) VALUES (?, ?)', [pubkey, nickname.trim()]);
+
+  /// How to show people: the nickname this device gave them, else the name
+  /// they gave themselves, else the name on their member rows; with their
+  /// profile photo. Covers everyone in `members`, profiles and [extra].
+  Future<Map<String, Person>> people({Iterable<String> extra = const []}) async {
+    final out = <String, Person>{};
+    for (final r in await s.query('SELECT pubkey, name FROM members WHERE $_live AND name IS NOT NULL')) {
+      out[r['pubkey'] as String] = Person(memberName: r['name'] as String?);
+    }
+    for (final r in await s.query('SELECT id, name, photo FROM profiles WHERE $_live')) {
+      final p = out[r['id'] as String] ?? Person();
+      out[r['id'] as String] = Person(memberName: p.memberName, profileName: r['name'] as String?, photo: r['photo'] as String?);
+    }
+    for (final e in (await nicknames()).entries) {
+      final p = out[e.key] ?? Person();
+      out[e.key] = Person(memberName: p.memberName, profileName: p.profileName, photo: p.photo, nickname: e.value);
+    }
+    for (final pk in extra) {
+      out.putIfAbsent(pk, Person.new);
+    }
+    return out;
   }
 
   // ------------------------------------------------------------ attachments
@@ -138,4 +183,13 @@ class Queries {
 
   Future<bool> hasAttachment(String sha) async =>
       await s.scalar('SELECT 1 FROM attachments WHERE sha256 = ?', [sha]) != null;
+}
+
+/// What is known about a person, by precedence: see [Queries.people].
+class Person {
+  final String? nickname, profileName, memberName, photo;
+  const Person({this.nickname, this.profileName, this.memberName, this.photo});
+
+  /// The best name, or null when only the npub is known.
+  String? get name => nickname ?? profileName ?? memberName;
 }

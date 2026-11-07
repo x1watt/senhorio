@@ -251,7 +251,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get membersHelpOwner =>
-      'Convide pessoas com um código curto, ou adicione o npub. Administradores gerem tudo, gestores o dia a dia, inquilinos veem só o seu contrato.';
+      'Convide pessoas com um código curto ou junte o npub. Os admins gerem tudo, os mods tratam do dia a dia, os inquilinos só veem o seu contrato, os trabalhadores só as suas tarefas.';
 
   @override
   String get method => 'Método';
@@ -726,6 +726,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'mod': 'Gestor',
       'member': 'Gestor',
       'user': 'Inquilino',
+      'worker': 'Trabalhador',
       'other': 'Membro',
     });
     return '$_temp0';
@@ -739,6 +740,8 @@ class AppLocalizationsPt extends AppLocalizations {
           'Gere o dia a dia: quartos, contratos, rendas, despesas. Pode convidar inquilinos.',
       'user':
           'Um inquilino: vê só o seu contrato e pagamentos, não altera nada.',
+      'worker':
+          'Faz trabalhos aqui (limpezas…): só vê as tarefas que lhe são dadas e envia fotos quando termina.',
       'other': '',
     });
     return '$_temp0';
@@ -839,4 +842,140 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get restoreFailed =>
       'Não foi possível restaurar: palavra-passe errada, ou não é uma cópia do Senhorio.';
+
+  @override
+  String get tasks => 'Tarefas';
+
+  @override
+  String get newTask => 'Nova tarefa';
+
+  @override
+  String get title => 'Título';
+
+  @override
+  String get assignee => 'Atribuída a';
+
+  @override
+  String get startsAt => 'Início';
+
+  @override
+  String get endsAt => 'Fim';
+
+  @override
+  String get place => 'Local';
+
+  @override
+  String get placeHint => 'Escadas, apartamento 1… (o que o trabalhador vê)';
+
+  @override
+  String get instructions => 'Instruções';
+
+  @override
+  String get noWorkersYet =>
+      'Convide primeiro um trabalhador (Membros → Convidar → Trabalhador).';
+
+  @override
+  String taskStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'open': 'Por fazer',
+      'done': 'À espera de aprovação',
+      'approved': 'Aprovada',
+      'rejected': 'Rejeitada',
+      'other': 'Por fazer',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get noTasksStaff =>
+      'Ainda sem tarefas. Convide um trabalhador e dê-lhe trabalho com um horário; ele envia fotos quando terminar e você aprova.';
+
+  @override
+  String get noTasksWorker => 'Ainda não lhe foi atribuído trabalho.';
+
+  @override
+  String get workerView =>
+      'Trabalha aqui: vê as tarefas que lhe foram atribuídas. Marque-as como feitas com fotos; os gestores aprovam-nas.';
+
+  @override
+  String get toReview => 'À espera de aprovação';
+
+  @override
+  String get upcoming => 'Por fazer';
+
+  @override
+  String get tasksToReview => 'Trabalho à espera de aprovação';
+
+  @override
+  String get photoEvidence => 'Fotos do trabalho';
+
+  @override
+  String get photoEvidenceHelp =>
+      'Tire fotos do trabalho terminado antes de o marcar como feito.';
+
+  @override
+  String get photoEvidenceRequired => 'É precisa pelo menos uma foto.';
+
+  @override
+  String get markDone => 'Marcar como feito';
+
+  @override
+  String get approve => 'Aprovar';
+
+  @override
+  String get reject => 'Rejeitar';
+
+  @override
+  String get noteOptional => 'Nota (opcional)';
+
+  @override
+  String doneAt(String time) {
+    return 'Marcado como feito $time';
+  }
+
+  @override
+  String reviewedBy(String name) {
+    return 'Revisto por $name';
+  }
+
+  @override
+  String get repeatNextWeek => 'Repetir na próxima semana';
+
+  @override
+  String get repeatNextMonth => 'Repetir no próximo mês';
+
+  @override
+  String get myProfile => 'O meu perfil';
+
+  @override
+  String get myProfileSubtitle => 'Nome e foto que os outros veem';
+
+  @override
+  String get myProfileHelp =>
+      'Mostrado às pessoas com quem partilha prédios, junto ao seu npub. Os gestores podem continuar a tratá-lo por um nome próprio deles.';
+
+  @override
+  String get nickname => 'Alcunha';
+
+  @override
+  String get nicknameHelp => 'Só neste aparelho: a pessoa não a vê.';
+
+  @override
+  String get remove => 'Remover';
+
+  @override
+  String get addPhoto => 'Adicionar foto';
+
+  @override
+  String get changePhoto => 'Mudar foto';
+
+  @override
+  String get setPhoto => 'Definir foto';
+
+  @override
+  String get editMyDetails => 'Editar os meus dados';
+
+  @override
+  String get myDocumentsHelp =>
+      'Os documentos que juntar aqui só são vistos pelos gestores deste prédio.';
 }

@@ -563,7 +563,7 @@ abstract class AppLocalizations {
   /// No description provided for @membersHelpOwner.
   ///
   /// In en, this message translates to:
-  /// **'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.'**
+  /// **'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease, workers only their tasks.'**
   String get membersHelpOwner;
 
   /// No description provided for @method.
@@ -1319,13 +1319,13 @@ abstract class AppLocalizations {
   /// No description provided for @roleName.
   ///
   /// In en, this message translates to:
-  /// **'{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} other{Member}}'**
+  /// **'{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} worker{Worker} other{Member}}'**
   String roleName(String role);
 
   /// No description provided for @roleHelp.
   ///
   /// In en, this message translates to:
-  /// **'{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} other{}}'**
+  /// **'{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} worker{Does work here (cleaning…): sees only the tasks given to them, sends photos when done.} other{}}'**
   String roleHelp(String role);
 
   /// No description provided for @whichTenant.
@@ -1465,6 +1465,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not restore: wrong password, or not a Senhorio backup.'**
   String get restoreFailed;
+
+  /// No description provided for @tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get tasks;
+
+  /// No description provided for @newTask.
+  ///
+  /// In en, this message translates to:
+  /// **'New task'**
+  String get newTask;
+
+  /// No description provided for @title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get title;
+
+  /// No description provided for @assignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to'**
+  String get assignee;
+
+  /// No description provided for @startsAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get startsAt;
+
+  /// No description provided for @endsAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get endsAt;
+
+  /// No description provided for @place.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get place;
+
+  /// No description provided for @placeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stairs, apartment 1… (what the worker sees)'**
+  String get placeHint;
+
+  /// No description provided for @instructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get instructions;
+
+  /// No description provided for @noWorkersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a worker first (Members → Invite → Worker).'**
+  String get noWorkersYet;
+
+  /// No description provided for @taskStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, open{To do} done{Waiting for approval} approved{Approved} rejected{Rejected} other{To do}}'**
+  String taskStatus(String status);
+
+  /// No description provided for @noTasksStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet. Invite a worker and give them work with a time range; they send photos when it is done, and you approve it.'**
+  String get noTasksStaff;
+
+  /// No description provided for @noTasksWorker.
+  ///
+  /// In en, this message translates to:
+  /// **'No work assigned to you yet.'**
+  String get noTasksWorker;
+
+  /// No description provided for @workerView.
+  ///
+  /// In en, this message translates to:
+  /// **'You work here: you see the tasks given to you. Mark them done with photos; the managers approve them.'**
+  String get workerView;
+
+  /// No description provided for @toReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get toReview;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get upcoming;
+
+  /// No description provided for @tasksToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Work waiting for approval'**
+  String get tasksToReview;
+
+  /// No description provided for @photoEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo evidence'**
+  String get photoEvidence;
+
+  /// No description provided for @photoEvidenceHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos of the finished work before marking it done.'**
+  String get photoEvidenceHelp;
+
+  /// No description provided for @photoEvidenceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one photo is needed.'**
+  String get photoEvidenceRequired;
+
+  /// No description provided for @markDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as done'**
+  String get markDone;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @doneAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked done {time}'**
+  String doneAt(String time);
+
+  /// No description provided for @reviewedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed by {name}'**
+  String reviewedBy(String name);
+
+  /// No description provided for @repeatNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat next week'**
+  String get repeatNextWeek;
+
+  /// No description provided for @repeatNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat next month'**
+  String get repeatNextMonth;
+
+  /// No description provided for @myProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get myProfile;
+
+  /// No description provided for @myProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and picture others see'**
+  String get myProfileSubtitle;
+
+  /// No description provided for @myProfileHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown to the people you share buildings with, next to your npub. Managers may still call you by a name of their own.'**
+  String get myProfileHelp;
+
+  /// No description provided for @nickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get nickname;
+
+  /// No description provided for @nicknameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on this device: the person does not see it.'**
+  String get nicknameHelp;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get addPhoto;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get changePhoto;
+
+  /// No description provided for @setPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Set photo'**
+  String get setPhoto;
+
+  /// No description provided for @editMyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit my details'**
+  String get editMyDetails;
+
+  /// No description provided for @myDocumentsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents you add here are seen only by the managers of this building.'**
+  String get myDocumentsHelp;
 }
 
 class _AppLocalizationsDelegate

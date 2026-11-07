@@ -7,7 +7,7 @@ import '../../core/dates.dart';
 import '../../core/money.dart';
 import 'common.dart';
 
-enum FieldType { text, multiline, money, integer, decimal, date, choice, toggle }
+enum FieldType { text, multiline, money, integer, decimal, date, datetime, choice, toggle }
 
 class FieldSpec {
   final String key;
@@ -61,6 +61,7 @@ class _EntityFormState extends State<EntityForm> {
         case FieldType.money:
           _text[f.key] = TextEditingController(text: centsToInput(v as int?));
         case FieldType.date:
+        case FieldType.datetime:
         case FieldType.choice:
           _values[f.key] = v;
         case FieldType.toggle:
@@ -93,6 +94,7 @@ class _EntityFormState extends State<EntityForm> {
         case FieldType.decimal:
           out[f.key] = double.tryParse(t!.replaceAll(',', '.'));
         case FieldType.date:
+        case FieldType.datetime:
         case FieldType.choice:
           out[f.key] = _values[f.key];
         case FieldType.toggle:
@@ -156,6 +158,35 @@ class _EntityFormState extends State<EntityForm> {
               decoration: InputDecoration(labelText: f.label, errorText: state.errorText,
                   suffixIcon: const Icon(Icons.calendar_today, size: 18)),
               child: Text(d == null ? '' : isoDate(d)),
+            ),
+          ),
+        );
+      case FieldType.datetime:
+        final d = DateTime.tryParse(_values[f.key] as String? ?? '');
+        return FormField<String>(
+          initialValue: _values[f.key] as String?,
+          validator: (_) => f.required && _values[f.key] == null ? context.l.required : null,
+          builder: (state) => InkWell(
+            onTap: () async {
+              final day = await showDatePicker(
+                context: context,
+                initialDate: d ?? DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (day == null || !mounted) return;
+              final time = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.fromDateTime(d ?? DateTime.now()),
+              );
+              if (time == null) return;
+              setState(() => _values[f.key] =
+                  isoDateTime(DateTime(day.year, day.month, day.day, time.hour, time.minute)));
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(labelText: f.label, errorText: state.errorText,
+                  suffixIcon: const Icon(Icons.schedule, size: 18)),
+              child: Text(d == null ? '' : formatDateTime(context, d)),
             ),
           ),
         );

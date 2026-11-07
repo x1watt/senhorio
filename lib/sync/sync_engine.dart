@@ -13,8 +13,10 @@
 //
 // A tenant (role user) only receives the building, their own tenant row,
 // leases, payments, rooms and apartments, and the managers' memberships;
-// `skip` tells them which sequences were left out so their vectors have
-// no gaps.
+// a worker only the building, the tasks given to them and the managers'
+// memberships; both get the profiles of those people and nothing else of
+// the global scope. `skip` tells them which sequences were left out so
+// their vectors have no gaps.
 //
 // Events are self-authenticating (signed); the projector decides what to
 // accept. This layer only decides who may *receive* a building's data.
@@ -90,24 +92,28 @@ class SyncEngine {
   }
 
   /// What [peer] may receive of [building]: null = everything (managers,
-  /// the owner, our own devices); otherwise the tenant's rows.
-  Future<TenantScope?> scopeFor(String peer, String building) async {
-    if (peer == me || building == globalBuilding) return null;
-    final m = await store.first(
-        'SELECT role, tenant_id FROM members WHERE id = ?', ['$building:$peer']);
-    if (m == null || roleOf(m['role']) != Role.user) return null;
-    final b = await store.first('SELECT owner FROM buildings WHERE id = ?', [building]);
-    if (b?['owner'] == peer) return null;
-    final tid = m['tenant_id'] as String?;
+  /// the owner, our own devices); otherwise a tenant's or a worker's rows.
+  Future<PartialScope?> scopeFor(String peer, String building) async {
+    if (peer == me) return null;
+    if (building == globalBuilding) return _globalScopeFor(peer);
+    final role = await _roleOfPeer(peer, building);
+    if (role == null || !role.isPartial) return null;
     final ids = <String>{'buildings/$building'};
     Future<List<String>> idsOf(String sql, List<Object?> args) async =>
         [for (final r in await store.query(sql, args)) r['id'] as String];
     String inList(int n) => List.filled(n, '?').join(', ');
-    for (final id in await idsOf(
-        "SELECT id FROM members WHERE building_id = ? AND (id = ? OR role IS NULL OR role != 'user')",
-        [building, '$building:$peer'])) {
+    for (final id in await _visibleMembers(peer, building)) {
       ids.add('members/$id');
     }
+    if (role == Role.worker) {
+      for (final id in await idsOf(
+          'SELECT id FROM tasks WHERE building_id = ? AND assignee = ?', [building, peer])) {
+        ids.add('tasks/$id');
+      }
+      return PartialScope(ids);
+    }
+    final m = await store.first('SELECT tenant_id FROM members WHERE id = ?', ['$building:$peer']);
+    final tid = m?['tenant_id'] as String?;
     if (tid != null) {
       ids.add('tenants/$tid');
       final leases = await store.query(
@@ -129,7 +135,48 @@ class SyncEngine {
         }
       }
     }
-    return TenantScope(ids);
+    return PartialScope(ids);
+  }
+
+  /// [peer]'s role in [building] as the members table has it now (the
+  /// owner: owner; null: not a member).
+  Future<Role?> _roleOfPeer(String peer, String building) async {
+    final b = await store.first('SELECT owner FROM buildings WHERE id = ?', [building]);
+    if (b?['owner'] == peer) return Role.owner;
+    final m = await store.first(
+        'SELECT role, deleted FROM members WHERE id = ?', ['$building:$peer']);
+    if (m == null || m['deleted'] == 1) return null;
+    return roleOf(m['role']) ?? Role.mod;
+  }
+
+  /// Member row ids a tenant or worker may see: the managers' and their own.
+  Future<List<String>> _visibleMembers(String peer, String building) async => [
+        for (final r in await store.query(
+            "SELECT id FROM members WHERE building_id = ? AND (id = ? OR role IS NULL OR role NOT IN ('user', 'worker'))",
+            [building, '$building:$peer']))
+          r['id'] as String
+      ];
+
+  /// Global rows for [peer]: everything when they manage some building we
+  /// share; otherwise only the profiles of the people they may see (no
+  /// categories: those name what the managers spend on).
+  Future<PartialScope?> _globalScopeFor(String peer) async {
+    final ids = <String>{'profiles/$peer'};
+    for (final b in await buildingsSharedWith(peer)) {
+      final role = await _roleOfPeer(peer, b);
+      if (role == null || !role.isPartial) return null;
+      for (final id in await _visibleMembers(peer, b)) {
+        ids.add('profiles/${id.substring(b.length + 1)}');
+      }
+    }
+    return PartialScope(ids);
+  }
+
+  /// Whether this device takes `skip` ranges for [building]: only a tenant
+  /// or worker there (for the global scope: one who manages nothing).
+  Future<bool> _acceptsSkips(String building) async {
+    if (building == globalBuilding) return await q.staffBuildings(me) == 0;
+    return (await ledger.myRole(building))?.isPartial ?? false;
   }
 
   // ---------------------------------------------------------------- vectors
@@ -279,9 +326,11 @@ class SyncEngine {
 
   Future<void> _onSkip(String from, Map<String, Object?> msg) async {
     final b = msg['b'] as String;
-    // Only a tenant accepts gaps, and only from someone sharing the building.
-    if (await ledger.myRole(b) != Role.user) return;
-    if (!(await buildingsSharedWith(from)).contains(b)) return;
+    // Only a tenant or worker accepts gaps, and only from someone sharing
+    // the building (for the global scope: any building).
+    if (!await _acceptsSkips(b)) return;
+    final shared = await buildingsSharedWith(from);
+    if (b == globalBuilding ? shared.isEmpty : !shared.contains(b)) return;
     final ranges = (msg['r'] as List?) ?? const [];
     if (ranges.isEmpty) return;
     await store.transaction(() async {
@@ -332,29 +381,32 @@ class SyncEngine {
     stats.lastSync = DateTime.now();
     if (n > 0) await _requestMissingBlobs(from);
     // A tenant whose lease or membership changed may now see rows it was
-    // told to skip: forget the gaps and ask again.
+    // told to skip (and the profiles of new managers): forget the gaps and
+    // ask again.
     final widened = {
       for (final (b, entity) in ledger.lastApplied)
         if (entity == 'leases' || entity == 'members') b,
     };
+    var again = false;
     for (final b in widened) {
-      if (await ledger.myRole(b) != Role.user) continue;
-      await store.exec('DELETE FROM hidden_ranges WHERE building_id = ?', [b]);
-      await syncWith(from);
+      if (!await _acceptsSkips(b)) continue;
+      await store.exec('DELETE FROM hidden_ranges WHERE building_id = ? OR building_id = ?', [b, globalBuilding]);
+      again = true;
     }
+    if (again) await syncWith(from);
   }
 
   Future<void> _requestMissingBlobs(String from) async {
-    final rows = [
-      ...await store.query(
-          "SELECT attachments AS a FROM expenses WHERE deleted = 0 AND attachments IS NOT NULL AND attachments != '[]'"),
-      ...await store.query(
-          "SELECT id_documents AS a FROM tenants WHERE deleted = 0 AND id_documents IS NOT NULL AND id_documents != '[]'"),
-    ];
     final need = <String>{};
-    for (final r in rows) {
-      for (final sha in (jsonDecode(r['a'] as String) as List).cast<String>()) {
-        if (!await q.hasAttachment(sha)) need.add(sha);
+    for (final e in blobFields.entries) {
+      for (final col in e.value) {
+        final rows = await store.query(
+            "SELECT $col AS a FROM ${e.key} WHERE deleted = 0 AND $col IS NOT NULL AND $col != '' AND $col != '[]'");
+        for (final r in rows) {
+          for (final sha in attachmentHashes(r['a'])) {
+            if (!await q.hasAttachment(sha)) need.add(sha);
+          }
+        }
       }
     }
     if (need.isNotEmpty) await _send(from, {'t': 'need', 'sha': need.toList()});
@@ -430,9 +482,16 @@ class SyncEngine {
   }
 }
 
-/// The rows a tenant may receive, as "entity/id".
-class TenantScope {
+/// The rows a tenant or a worker may receive, as "entity/id".
+class PartialScope {
   final Set<String> ids;
-  TenantScope(this.ids);
+  PartialScope(this.ids);
   bool visible(String entity, String id) => ids.contains('$entity/$id');
+}
+
+/// The hashes in an attachment column: a JSON list, or one sha256.
+List<String> attachmentHashes(Object? v) {
+  if (v is! String || v.isEmpty) return const [];
+  if (v.startsWith('[')) return (jsonDecode(v) as List).cast<String>();
+  return [v];
 }

@@ -77,7 +77,7 @@
   "member": "Membro",
   "members": "Membros",
   "membersHelpMember": "Estas pessoas partilham este prédio. O dono e os administradores gerem os membros; os gestores podem convidar inquilinos.",
-  "membersHelpOwner": "Convide pessoas com um código curto, ou adicione o npub. Administradores gerem tudo, gestores o dia a dia, inquilinos veem só o seu contrato.",
+  "membersHelpOwner": "Convide pessoas com um código curto ou junte o npub. Os admins gerem tudo, os mods tratam do dia a dia, os inquilinos só veem o seu contrato, os trabalhadores só as suas tarefas.",
   "method": "Método",
   "methodHint": "Transferência, numerário, MB Way…",
   "more": "Mais",
@@ -202,8 +202,8 @@
   "joinWithCode": "Entrar com código",
   "inviteCode": "Código de convite",
   "role": "Função",
-  "roleName": "{role, select, owner{Dono} admin{Administrador} mod{Gestor} member{Gestor} user{Inquilino} other{Membro}}",
-  "roleHelp": "{role, select, admin{Co-proprietário: vê e altera tudo, incluindo quem é membro.} mod{Gere o dia a dia: quartos, contratos, rendas, despesas. Pode convidar inquilinos.} user{Um inquilino: vê só o seu contrato e pagamentos, não altera nada.} other{}}",
+  "roleName": "{role, select, owner{Dono} admin{Administrador} mod{Gestor} member{Gestor} user{Inquilino} worker{Trabalhador} other{Membro}}",
+  "roleHelp": "{role, select, admin{Co-proprietário: vê e altera tudo, incluindo quem é membro.} mod{Gere o dia a dia: quartos, contratos, rendas, despesas. Pode convidar inquilinos.} user{Um inquilino: vê só o seu contrato e pagamentos, não altera nada.} worker{Faz trabalhos aqui (limpezas…): só vê as tarefas que lhe são dadas e envia fotos quando termina.} other{}}",
   "whichTenant": "Que inquilino é esta pessoa?",
   "noTenantsToInvite": "Adicione primeiro o inquilino (separador Inquilinos) e depois convide-o.",
   "nameOptional": "Nome (opcional)",
@@ -226,5 +226,65 @@
   "restoreKeyHelp": "Cole a chave de restauro mostrada quando a cópia foi feita (o nsec e a palavra-passe).",
   "restoreKeyInvalid": "A chave de restauro precisa do nsec e da palavra-passe de 64 caracteres.",
   "restoreConfirm": "Substituir tudo neste dispositivo por {file}? Os dados atuais ficam guardados como senhorio-before-restore.zx na pasta da app.",
-  "restoreFailed": "Não foi possível restaurar: palavra-passe errada, ou não é uma cópia do Senhorio."
+  "restoreFailed": "Não foi possível restaurar: palavra-passe errada, ou não é uma cópia do Senhorio.",
+  "tasks": "Tarefas",
+  "newTask": "Nova tarefa",
+  "title": "Título",
+  "assignee": "Atribuída a",
+  "startsAt": "Início",
+  "endsAt": "Fim",
+  "place": "Local",
+  "placeHint": "Escadas, apartamento 1… (o que o trabalhador vê)",
+  "instructions": "Instruções",
+  "noWorkersYet": "Convide primeiro um trabalhador (Membros → Convidar → Trabalhador).",
+  "taskStatus": "{status, select, open{Por fazer} done{À espera de aprovação} approved{Aprovada} rejected{Rejeitada} other{Por fazer}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "noTasksStaff": "Ainda sem tarefas. Convide um trabalhador e dê-lhe trabalho com um horário; ele envia fotos quando terminar e você aprova.",
+  "noTasksWorker": "Ainda não lhe foi atribuído trabalho.",
+  "workerView": "Trabalha aqui: vê as tarefas que lhe foram atribuídas. Marque-as como feitas com fotos; os gestores aprovam-nas.",
+  "toReview": "À espera de aprovação",
+  "upcoming": "Por fazer",
+  "tasksToReview": "Trabalho à espera de aprovação",
+  "photoEvidence": "Fotos do trabalho",
+  "photoEvidenceHelp": "Tire fotos do trabalho terminado antes de o marcar como feito.",
+  "photoEvidenceRequired": "É precisa pelo menos uma foto.",
+  "markDone": "Marcar como feito",
+  "approve": "Aprovar",
+  "reject": "Rejeitar",
+  "noteOptional": "Nota (opcional)",
+  "doneAt": "Marcado como feito {time}",
+  "@doneAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewedBy": "Revisto por {name}",
+  "@reviewedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatNextWeek": "Repetir na próxima semana",
+  "repeatNextMonth": "Repetir no próximo mês",
+  "myProfile": "O meu perfil",
+  "myProfileSubtitle": "Nome e foto que os outros veem",
+  "myProfileHelp": "Mostrado às pessoas com quem partilha prédios, junto ao seu npub. Os gestores podem continuar a tratá-lo por um nome próprio deles.",
+  "nickname": "Alcunha",
+  "nicknameHelp": "Só neste aparelho: a pessoa não a vê.",
+  "remove": "Remover",
+  "addPhoto": "Adicionar foto",
+  "changePhoto": "Mudar foto",
+  "setPhoto": "Definir foto",
+  "editMyDetails": "Editar os meus dados",
+  "myDocumentsHelp": "Os documentos que juntar aqui só são vistos pelos gestores deste prédio."
 }

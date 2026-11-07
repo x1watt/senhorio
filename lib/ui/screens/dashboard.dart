@@ -7,6 +7,7 @@ import '../../domain/rent_schedule.dart';
 import '../widgets/common.dart';
 import 'expenses.dart';
 import 'room.dart';
+import 'tasks.dart';
 
 class _Late {
   final LeaseStatus status;
@@ -25,7 +26,8 @@ class _DashData {
   final List<_Late> late;
   final List<_Upcoming> upcoming;
   final int income, expenses, buildings;
-  _DashData(this.late, this.upcoming, this.income, this.expenses, this.buildings);
+  final List<DbRow> review; // tasks marked done, waiting for approval
+  _DashData(this.late, this.upcoming, this.income, this.expenses, this.buildings, this.review);
 }
 
 class DashboardScreen extends StatelessWidget {
@@ -80,7 +82,8 @@ class DashboardScreen extends StatelessWidget {
           final spent = exps
               .where((e) => (e['date'] as String? ?? '').startsWith(month))
               .fold<int>(0, (s, e) => s + ((e['amount_cents'] as int?) ?? 0));
-          return _DashData(late, upcoming, income, spent, buildings.length);
+          final review = (await a.q.tasks()).where((t) => t['status'] == 'done' && buildings.containsKey(t['building_id'])).toList();
+          return _DashData(late, upcoming, income, spent, buildings.length, review);
         },
         builder: (context, d) {
           final scheme = Theme.of(context).colorScheme;
@@ -111,6 +114,23 @@ class DashboardScreen extends StatelessWidget {
                   ),
               ]),
             ),
+            if (d.review.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SectionHeader(l.tasksToReview),
+                  for (final t in d.review)
+                    ListTile(
+                      leading: const Icon(Icons.hourglass_top, color: Colors.orange),
+                      title: Text(t['title'] as String? ?? ''),
+                      subtitle: Text(t['place'] as String? ?? ''),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => TaskScreen(taskId: t['id'] as String))),
+                    ),
+                ]),
+              ),
+            ],
             const SizedBox(height: 12),
             Card(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

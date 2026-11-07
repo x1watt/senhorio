@@ -22,11 +22,13 @@ const entityFields = <String, Map<String, String>>{
     'currency': 'TEXT',
     'owner': 'TEXT', // hex pubkey of the creator, immutable
     'notes': 'TEXT',
+    'photo': 'TEXT', // sha256 (table attachments) of a presentation picture
   },
   'apartments': {
     'name': 'TEXT',
     'floor': 'TEXT',
     'notes': 'TEXT',
+    'photo': 'TEXT',
   },
   'rooms': {
     'apartment_id': 'TEXT',
@@ -34,6 +36,7 @@ const entityFields = <String, Map<String, String>>{
     'area_m2': 'REAL',
     'available': 'INTEGER', // 1 = for rent, 0 = kept empty on purpose
     'notes': 'TEXT',
+    'photo': 'TEXT',
   },
   'tenants': {
     'name': 'TEXT',
@@ -112,10 +115,55 @@ const entityFields = <String, Map<String, String>>{
   'members': {
     'pubkey': 'TEXT',
     'name': 'TEXT',
-    'role': 'TEXT', // owner | admin | mod | user ('member' = mod), see domain/roles.dart
+    'role': 'TEXT', // owner | admin | mod | user | worker ('member' = mod), see domain/roles.dart
     'tenant_id': 'TEXT', // for role user: the tenant row this person is
   },
+  // Global (building ''): what each person says about themselves. The row
+  // id is the pubkey and only that pubkey writes it.
+  'profiles': {
+    'name': 'TEXT',
+    'photo': 'TEXT', // sha256 (table attachments)
+  },
+  // Work (cleaning...) given to a worker, with photo evidence and a review.
+  'tasks': {
+    'title': 'TEXT',
+    'place': 'TEXT', // where, in words: the worker never gets the rows
+    'apartment_id': 'TEXT',
+    'room_id': 'TEXT',
+    'assignee': 'TEXT', // hex pubkey of the worker
+    'starts_at': 'TEXT', // ISO 8601 local date-time
+    'ends_at': 'TEXT',
+    'instructions': 'TEXT',
+    'status': 'TEXT', // open | done | approved | rejected
+    'photos': 'TEXT', // JSON list of sha256 (table attachments)
+    'done_at': 'TEXT',
+    'done_note': 'TEXT',
+    'reviewed_by': 'TEXT',
+    'reviewed_at': 'TEXT',
+    'review_note': 'TEXT',
+  },
 };
+
+/// Columns holding attachment hashes: a JSON list, or one sha256 string.
+/// The sync asks peers for the blobs these refer to.
+const blobFields = <String, List<String>>{
+  'expenses': ['attachments'],
+  'tenants': ['id_documents'],
+  'tasks': ['photos'],
+  'profiles': ['photo'],
+  'buildings': ['photo'],
+  'apartments': ['photo'],
+  'rooms': ['photo'],
+};
+
+/// Fields a tenant may change on their own `tenants` row.
+const tenantOwnFields = {'phone', 'phone2', 'email', 'emergency_contact', 'id_documents'};
+
+/// Fields a worker may change on a task assigned to them.
+const workerTaskFields = {'status', 'photos', 'done_at', 'done_note'};
+
+/// Values of `tasks.status`.
+const taskStatuses = ['open', 'done', 'approved', 'rejected'];
 
 /// Global entities (not tied to a building) use this building id.
 const globalBuilding = '';
@@ -143,6 +191,8 @@ const localTables = <String, String>{
   // so they count as held in our sync vectors.
   'hidden_ranges': '''CREATE TABLE IF NOT EXISTS hidden_ranges (
     building_id TEXT, lane TEXT, from_seq INTEGER, to_seq INTEGER)''',
+  // Names this device gives to people (never synced, never shown to them).
+  'nicknames': 'CREATE TABLE IF NOT EXISTS nicknames (pubkey TEXT PRIMARY KEY, nickname TEXT)',
 };
 
 String createEntityTableSql(String table) {

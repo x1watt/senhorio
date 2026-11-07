@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../data/ledger.dart';
+import '../../app_state.dart';
 import '../widgets/common.dart';
 import 'buildings.dart';
 import 'dashboard.dart';
@@ -44,16 +47,28 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final app = context.read<AppState>();
+    context.select<Ledger, int>((l) => l.revision);
+    return FutureBuilder<bool>(
+      future: app.q.onlyTenant(app.identity.pubkey),
+      builder: (context, snap) => _shell(context, snap.data ?? false),
+    );
+  }
+
+  Widget _shell(BuildContext context, bool partial) {
     final l = context.l;
-    final dests = [
-      (Icons.dashboard_outlined, Icons.dashboard, l.dashboard),
-      (Icons.apartment_outlined, Icons.apartment, l.buildings),
-      (Icons.receipt_long_outlined, Icons.receipt_long, l.expenses),
-      (Icons.bar_chart_outlined, Icons.bar_chart, l.statistics),
-      (Icons.more_horiz, Icons.more_horiz, l.more),
+    // Tenants and workers hold nothing to total up: their buildings and More.
+    final all = [
+      (Icons.dashboard_outlined, Icons.dashboard, l.dashboard, 0),
+      (Icons.apartment_outlined, Icons.apartment, l.buildings, 1),
+      (Icons.receipt_long_outlined, Icons.receipt_long, l.expenses, 2),
+      (Icons.bar_chart_outlined, Icons.bar_chart, l.statistics, 3),
+      (Icons.more_horiz, Icons.more_horiz, l.more, 4),
     ];
+    final dests = partial ? [all[1], all[4]] : all;
+    if (_tab >= dests.length) _tab = 0;
     final wide = MediaQuery.sizeOf(context).width >= 800;
-    final body = IndexedStack(index: _tab, children: _pages);
+    final body = IndexedStack(index: dests[_tab].$4, children: _pages);
     if (wide) {
       return Scaffold(
         body: Row(children: [

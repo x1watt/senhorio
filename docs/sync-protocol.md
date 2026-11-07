@@ -38,8 +38,12 @@ generation with now (`AS OF GENERATION`).
   |---|---|
   | `owner` | everything |
   | `admin` | everything, including members, except the owner's own row |
-  | `mod` (old rows: `member`) | all data, but not members, except adding and revoking tenants (`user`) |
-  | `user` (tenant) | nothing: read-only, and receives only its own rows (see below) |
+  | `mod` (old rows: `member`) | all data, but not members, except adding and revoking tenants (`user`) and workers |
+  | `user` (tenant) | only the contact fields and documents of its own `tenants` row (`schema.tenantOwnFields`); receives only its own rows (see below) |
+  | `worker` | only `status: done`, `photos`, `done_at` and `done_note` on a `tasks` row assigned to it; receives only those tasks |
+
+- Everyone writes their own `profiles` row (global, id = pubkey) and
+  nobody else's.
 
 - A `members` row's id is always `building:pubkey`, and its pubkey never
   changes. Only the owner writes the owner's row.
@@ -50,23 +54,37 @@ generation with now (`AS OF GENERATION`).
   `pending` and re-checked when membership changes. This happens because
   events can arrive out of order.
 - Global `categories` events come from anyone who manages (not as a
-  tenant) some building we hold.
+  tenant or worker) some building we hold.
 
-## What a tenant receives
+## What a tenant or a worker receives
 
-A tenant's device gets only the rows of the building it may see:
+A tenant's device gets only the rows of the building it may see
+(`SyncEngine.scopeFor`):
 
 - the building row;
 - its own `members` row and the rows of the owner, admins and mods;
 - its `tenants` row (the member row's `tenant_id`);
 - its leases, their payments, rooms and apartments.
 
+A worker's device gets the building row, the same `members` rows and the
+`tasks` rows whose `assignee` it is. Tasks carry the place in words
+(`place`): the rooms themselves never go to a worker.
+
+Of the global scope, both get only the `profiles` of the people above
+(and their own), no categories. Someone who manages any building we share
+gets the whole global scope.
+
 The sender filters both the history (`hello`) and live pushes. For the
-sequences it leaves out, it sends a `skip` with ranges, which the tenant
+sequences it leaves out, it sends a `skip` with ranges, which the receiver
 stores in `hidden_ranges` and counts as held in its vectors. Without it,
 the gaps would make every hello resend everything after them. When a
-lease or membership of the tenant's building changes, the tenant forgets
-its ranges and says hello again, so newly visible rows (a new room) arrive.
+lease or membership of the building changes, the device forgets its ranges
+(for that building and the global scope) and says hello again, so newly
+visible rows (a new room, a new manager's profile) arrive.
+
+Attachments (`need`/`blob`) are requested for every column in
+`schema.blobFields`: receipts, ID documents, task photos and the pictures
+of profiles, buildings, apartments and rooms.
 
 ## Invite codes
 
@@ -124,7 +142,7 @@ node's announces while it has an open code.
 | `events` | `e: [event…]` | Up to 48 KB of signed events. |
 | `need` | `sha: [...]` | Receipts and ID documents referenced but not held. |
 | `blob` | `sha, mime, data` | One receipt or ID document (base64). The receiver checks the SHA-256. |
-| `skip` | `b, r: [[lane, from, to]…]` | To a tenant: sequences it may not see. Accepted only by a device whose role there is `user`. |
+| `skip` | `b, r: [[lane, from, to]…]` | To a tenant or worker: sequences it may not see. Accepted only by a device whose role there is `user` or `worker` (for `b = ""`: one that manages no building). |
 | `join` | `code` | Asks to join with an invite code. |
 | `join-ok` / `join-fail` | `b, name, role` / `reason` | The inviter's answer. |
 
@@ -142,8 +160,13 @@ every 3 minutes and whenever one is discovered.
   revocation.
 - `test/invite_test.dart`: invite codes and roles. A mod joins by code;
   a used or expired code is refused. A mod invites a tenant, who receives
-  only their own lease, with no gaps re-asked. Then admin/mod/tenant
-  permissions, and a demotion that keeps earlier changes.
+  only their own lease, with no gaps re-asked. Profiles reach the right
+  people and categories stay with the managers; a tenant edits only their
+  own contacts and documents; a worker receives only their tasks and can
+  only mark them done with photos. Then admin/mod/tenant permissions, and
+  a demotion that keeps earlier changes.
+- `test/tasks_screen_test.dart`: the tasks tab, the task page and the
+  members tab, with nicknames.
 - `test/rns_sync_test.dart`: real nodes through a public hub, including
   a join by invite code found through the announce tag:
   `SENHORIO_HUB=rns.wisco.network:4242 flutter test test/rns_sync_test.dart`.

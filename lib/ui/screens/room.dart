@@ -16,7 +16,8 @@ class _RoomData {
   final List<DbRow> apartments, tenants, leases;
   final Map<String, List<DbRow>> payments; // lease id -> payments
   final bool readOnly; // a tenant looking at their own room
-  _RoomData(this.room, this.apartments, this.tenants, this.leases, this.payments, this.readOnly);
+  final String? myTenantId; // a tenant: the tenant row that is me
+  _RoomData(this.room, this.apartments, this.tenants, this.leases, this.payments, this.readOnly, this.myTenantId);
 }
 
 class RoomScreen extends StatelessWidget {
@@ -32,9 +33,11 @@ class RoomScreen extends StatelessWidget {
         if (room == null) return null;
         final b = room['building_id'] as String;
         final leases = await a.q.leases(room: roomId);
+        final role = await a.ledger.myRole(b);
+        final mine = await a.q.byId('members', '$b:${a.identity.pubkey}');
         return _RoomData(room, await a.q.apartments(b), await a.q.tenants(b), leases, {
           for (final le in leases) le['id'] as String: await a.q.payments(lease: le['id'] as String),
-        }, !((await a.ledger.myRole(b))?.isStaff ?? true));
+        }, !(role?.isStaff ?? true), role == Role.user ? (mine?['tenant_id'] as String?) : null);
       },
       builder: (context, d) {
         if (d == null || d.room['deleted'] == 1) {
@@ -54,17 +57,24 @@ class RoomScreen extends StatelessWidget {
             actions: d.readOnly ? null : [
               IconButton(
                 icon: const Icon(Icons.edit),
+                tooltip: l.edit,
                 onPressed: () => editEntity(context, table: 'rooms', building: bid, title: l.edit,
                     fields: roomFields(l, d.apartments), row: d.room),
               ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () async {
-                  if (await confirm(context, l.confirmDelete) && context.mounted) {
+              PopupMenuButton<String>(
+                onSelected: (v) async {
+                  if (v == 'photo') {
+                    final sha = await pickPhoto(context);
+                    if (sha != null && context.mounted) await setEntityPhoto(context, 'rooms', bid, roomId, sha);
+                  } else if (v == 'delete' && await confirm(context, l.confirmDelete) && context.mounted) {
                     await guarded(context, () => context.app.ledger.delete('rooms', bid, roomId));
                     if (context.mounted) Navigator.pop(context);
                   }
                 },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'photo', child: Text(l.setPhoto)),
+                  PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                ],
               ),
             ],
           ),
@@ -85,6 +95,7 @@ class RoomScreen extends StatelessWidget {
             },
           ),
           body: ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+            PhotoBanner(sha: d.room['photo'] as String?, icon: Icons.bed_outlined),
             if (current.isEmpty)
               EmptyState(Icons.bed_outlined,
                   d.room['available'] == 0 ? l.keptEmpty : l.vacant),
@@ -96,6 +107,7 @@ class RoomScreen extends StatelessWidget {
                 payments: d.payments[le['id']] ?? const [],
                 tenants: d.tenants,
                 readOnly: d.readOnly,
+                ownTenant: d.myTenantId != null && le['tenant_id'] == d.myTenantId,
               ),
             if (d.leases.isNotEmpty) SectionHeader(l.occupancyHistory),
             if (d.leases.isNotEmpty) _OccupancyTimeline(leases: d.leases, tenants: tenants, payments: d.payments),
@@ -195,8 +207,9 @@ class _LeaseCard extends StatelessWidget {
   final List<DbRow> payments;
   final List<DbRow> tenants;
   final bool readOnly;
+  final bool ownTenant; // the tenant looking at their own lease: may edit their details
   const _LeaseCard({required this.lease, required this.tenant, required this.status,
-      required this.payments, required this.tenants, this.readOnly = false});
+      required this.payments, required this.tenants, this.readOnly = false, this.ownTenant = false});
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +229,13 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: Text(tenant?['name'] as String? ?? '?',
                 style: Theme.of(context).textTheme.titleMedium)),
+            if (ownTenant && tenant != null)
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: l.editMyDetails,
+                onPressed: () => editEntity(context, table: 'tenants', building: bid, title: l.editMyDetails,
+                    fields: tenantOwnFieldSpecs(l), row: tenant),
+              ),
             if (!readOnly) PopupMenuButton<String>(
               onSelected: (v) async {
                 if (v == 'edit') {
@@ -267,9 +287,10 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(l.idDocuments, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 4),
+            if (ownTenant) Text(l.myDocumentsHelp, style: Theme.of(context).textTheme.bodySmall),
             AttachmentList(
               shas: docs,
-              onChanged: readOnly ? null : (list) => guarded(context, () => context.app.ledger.upsert(
+              onChanged: readOnly && !ownTenant ? null : (list) => guarded(context, () => context.app.ledger.upsert(
                   'tenants', bid, {'id_documents': list}, id: tenant!['id'] as String)),
             ),
           ],

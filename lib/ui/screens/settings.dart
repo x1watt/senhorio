@@ -13,6 +13,7 @@ import '../widgets/entity_form.dart';
 import '../../platform/backup.dart';
 import '../../platform/updates.dart';
 import 'checkpoints.dart';
+import 'profile.dart';
 import 'update_dialog.dart';
 import 'sync_screen.dart';
 
@@ -31,6 +32,12 @@ class SettingsScreen extends StatelessWidget {
           title: Text(l.myIdentity),
           subtitle: Text(app.identity.npub, maxLines: 1, overflow: TextOverflow.ellipsis),
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IdentityScreen())),
+        ),
+        ListTile(
+          leading: const Icon(Icons.account_circle),
+          title: Text(l.myProfile),
+          subtitle: Text(l.myProfileSubtitle),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
         ),
         ListTile(
           leading: const Icon(Icons.sync),

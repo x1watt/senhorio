@@ -14,3 +14,7 @@ int daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
 /// "yyyy-mm" month key.
 String monthKey(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}';
+
+/// Date-times are stored as local ISO "yyyy-mm-ddThh:mm" text.
+String isoDateTime(DateTime d) =>
+    '${isoDate(d)}T${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

@@ -251,7 +251,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get membersHelpOwner =>
-      'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.';
+      'Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease, workers only their tasks.';
 
   @override
   String get method => 'Method';
@@ -725,6 +725,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'mod': 'Mod',
       'member': 'Mod',
       'user': 'Tenant',
+      'worker': 'Worker',
       'other': 'Member',
     });
     return '$_temp0';
@@ -739,6 +740,8 @@ class AppLocalizationsEn extends AppLocalizations {
           'Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.',
       'user':
           'A tenant: sees only their own lease and payments, changes nothing.',
+      'worker':
+          'Does work here (cleaning…): sees only the tasks given to them, sends photos when done.',
       'other': '',
     });
     return '$_temp0';
@@ -840,4 +843,140 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get restoreFailed =>
       'Could not restore: wrong password, or not a Senhorio backup.';
+
+  @override
+  String get tasks => 'Tasks';
+
+  @override
+  String get newTask => 'New task';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get assignee => 'Assigned to';
+
+  @override
+  String get startsAt => 'Starts';
+
+  @override
+  String get endsAt => 'Ends';
+
+  @override
+  String get place => 'Place';
+
+  @override
+  String get placeHint => 'Stairs, apartment 1… (what the worker sees)';
+
+  @override
+  String get instructions => 'Instructions';
+
+  @override
+  String get noWorkersYet =>
+      'Invite a worker first (Members → Invite → Worker).';
+
+  @override
+  String taskStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'open': 'To do',
+      'done': 'Waiting for approval',
+      'approved': 'Approved',
+      'rejected': 'Rejected',
+      'other': 'To do',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get noTasksStaff =>
+      'No tasks yet. Invite a worker and give them work with a time range; they send photos when it is done, and you approve it.';
+
+  @override
+  String get noTasksWorker => 'No work assigned to you yet.';
+
+  @override
+  String get workerView =>
+      'You work here: you see the tasks given to you. Mark them done with photos; the managers approve them.';
+
+  @override
+  String get toReview => 'Waiting for approval';
+
+  @override
+  String get upcoming => 'To do';
+
+  @override
+  String get tasksToReview => 'Work waiting for approval';
+
+  @override
+  String get photoEvidence => 'Photo evidence';
+
+  @override
+  String get photoEvidenceHelp =>
+      'Take photos of the finished work before marking it done.';
+
+  @override
+  String get photoEvidenceRequired => 'At least one photo is needed.';
+
+  @override
+  String get markDone => 'Mark as done';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get noteOptional => 'Note (optional)';
+
+  @override
+  String doneAt(String time) {
+    return 'Marked done $time';
+  }
+
+  @override
+  String reviewedBy(String name) {
+    return 'Reviewed by $name';
+  }
+
+  @override
+  String get repeatNextWeek => 'Repeat next week';
+
+  @override
+  String get repeatNextMonth => 'Repeat next month';
+
+  @override
+  String get myProfile => 'My profile';
+
+  @override
+  String get myProfileSubtitle => 'Name and picture others see';
+
+  @override
+  String get myProfileHelp =>
+      'Shown to the people you share buildings with, next to your npub. Managers may still call you by a name of their own.';
+
+  @override
+  String get nickname => 'Nickname';
+
+  @override
+  String get nicknameHelp => 'Only on this device: the person does not see it.';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get addPhoto => 'Add photo';
+
+  @override
+  String get changePhoto => 'Change photo';
+
+  @override
+  String get setPhoto => 'Set photo';
+
+  @override
+  String get editMyDetails => 'Edit my details';
+
+  @override
+  String get myDocumentsHelp =>
+      'Documents you add here are seen only by the managers of this building.';
 }

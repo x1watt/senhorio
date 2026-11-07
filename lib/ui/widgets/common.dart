@@ -66,6 +66,23 @@ class EmptyState extends StatelessWidget {
       );
 }
 
+/// "8 Nov 2026, 09:00" in the app's locale.
+String formatDateTime(BuildContext context, DateTime d) {
+  final m = MaterialLocalizations.of(context);
+  return '${m.formatMediumDate(d)}, ${m.formatTimeOfDay(TimeOfDay.fromDateTime(d), alwaysUse24HourFormat: true)}';
+}
+
+/// "8 Nov 2026, 09:00–11:00" (the day once when both fall on it).
+String formatTimeRange(BuildContext context, DateTime? from, DateTime? to) {
+  if (from == null) return to == null ? '' : formatDateTime(context, to);
+  if (to == null) return formatDateTime(context, from);
+  final m = MaterialLocalizations.of(context);
+  final t = m.formatTimeOfDay(TimeOfDay.fromDateTime(to), alwaysUse24HourFormat: true);
+  return DateUtils.isSameDay(from, to)
+      ? '${formatDateTime(context, from)}–$t'
+      : '${formatDateTime(context, from)} → ${formatDateTime(context, to)}';
+}
+
 Future<bool> confirm(BuildContext context, String message) async =>
     await showDialog<bool>(
       context: context,

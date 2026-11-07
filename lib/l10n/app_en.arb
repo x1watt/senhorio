@@ -77,7 +77,7 @@
   "member": "Member",
   "members": "Members",
   "membersHelpMember": "These people share this building. The owner and admins manage members; mods can invite tenants.",
-  "membersHelpOwner": "Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease.",
+  "membersHelpOwner": "Invite people with a short code, or add their npub. Admins manage everything, mods run the day to day, tenants see only their own lease, workers only their tasks.",
   "method": "Method",
   "methodHint": "Transfer, cash, MB Way…",
   "more": "More",
@@ -335,7 +335,7 @@
   "joinWithCode": "Join with a code",
   "inviteCode": "Invite code",
   "role": "Role",
-  "roleName": "{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} other{Member}}",
+  "roleName": "{role, select, owner{Owner} admin{Admin} mod{Mod} member{Mod} user{Tenant} worker{Worker} other{Member}}",
   "@roleName": {
     "placeholders": {
       "role": {
@@ -343,7 +343,7 @@
       }
     }
   },
-  "roleHelp": "{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} other{}}",
+  "roleHelp": "{role, select, admin{Co-owner: sees and changes everything, including who is a member.} mod{Runs the day to day: rooms, leases, rents, expenses. Can invite tenants.} user{A tenant: sees only their own lease and payments, changes nothing.} worker{Does work here (cleaning…): sees only the tasks given to them, sends photos when done.} other{}}",
   "@roleHelp": {
     "placeholders": {
       "role": {
@@ -408,5 +408,65 @@
       }
     }
   },
-  "restoreFailed": "Could not restore: wrong password, or not a Senhorio backup."
+  "restoreFailed": "Could not restore: wrong password, or not a Senhorio backup.",
+  "tasks": "Tasks",
+  "newTask": "New task",
+  "title": "Title",
+  "assignee": "Assigned to",
+  "startsAt": "Starts",
+  "endsAt": "Ends",
+  "place": "Place",
+  "placeHint": "Stairs, apartment 1… (what the worker sees)",
+  "instructions": "Instructions",
+  "noWorkersYet": "Invite a worker first (Members → Invite → Worker).",
+  "taskStatus": "{status, select, open{To do} done{Waiting for approval} approved{Approved} rejected{Rejected} other{To do}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "noTasksStaff": "No tasks yet. Invite a worker and give them work with a time range; they send photos when it is done, and you approve it.",
+  "noTasksWorker": "No work assigned to you yet.",
+  "workerView": "You work here: you see the tasks given to you. Mark them done with photos; the managers approve them.",
+  "toReview": "Waiting for approval",
+  "upcoming": "To do",
+  "tasksToReview": "Work waiting for approval",
+  "photoEvidence": "Photo evidence",
+  "photoEvidenceHelp": "Take photos of the finished work before marking it done.",
+  "photoEvidenceRequired": "At least one photo is needed.",
+  "markDone": "Mark as done",
+  "approve": "Approve",
+  "reject": "Reject",
+  "noteOptional": "Note (optional)",
+  "doneAt": "Marked done {time}",
+  "@doneAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewedBy": "Reviewed by {name}",
+  "@reviewedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatNextWeek": "Repeat next week",
+  "repeatNextMonth": "Repeat next month",
+  "myProfile": "My profile",
+  "myProfileSubtitle": "Name and picture others see",
+  "myProfileHelp": "Shown to the people you share buildings with, next to your npub. Managers may still call you by a name of their own.",
+  "nickname": "Nickname",
+  "nicknameHelp": "Only on this device: the person does not see it.",
+  "remove": "Remove",
+  "addPhoto": "Add photo",
+  "changePhoto": "Change photo",
+  "setPhoto": "Set photo",
+  "editMyDetails": "Edit my details",
+  "myDocumentsHelp": "Documents you add here are seen only by the managers of this building."
 }

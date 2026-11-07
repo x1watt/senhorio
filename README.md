@@ -35,11 +35,24 @@ Android and desktop (Linux, Windows, macOS).
     joins. A code works once, for 24 hours.
   - **Admins** are co-owners. **Mods** run the day to day and can invite
     tenants.
-  - **Tenants** (users) see only their own lease, room and payments,
-    read-only. Other tenants' data and the expenses never reach their
-    phone.
+  - **Tenants** (users) see only their own lease, room and payments, and
+    whether the rent is late. They can change their own phone and email
+    and add their identification documents; everything else is read-only.
+    Other tenants' data and the expenses never reach their phone.
+  - **Workers** (cleaning, repairs) see only the tasks given to them.
   - Members can also be added by npub. Roles can be changed and members
-    revoked. On Android an
+    revoked.
+- **Profiles and nicknames:** everyone sets a name and a picture (More →
+  My profile) that the people they share buildings with see. Managers can
+  also give a member a nickname of their own, kept only on their device.
+- **Work and cleaning tasks** (building → Tasks): a task has a place, a
+  time range and a worker. The worker takes photos of the finished work
+  and marks it done; an owner, admin or mod approves or rejects it. Work
+  waiting for approval shows on the dashboard. A task can be repeated to
+  the next week or month in one tap.
+- **Pictures** of a building, an apartment or a room, shown on their
+  screens and lists.
+- On Android an
   optional foreground service keeps syncing with the app closed. See
   [docs/sync-protocol.md](docs/sync-protocol.md).
 - **Nothing is lost:**

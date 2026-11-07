@@ -4,12 +4,14 @@ import '../../data/zx_store.dart';
 import '../../domain/rent_schedule.dart';
 import '../../domain/roles.dart';
 import '../forms.dart';
+import '../widgets/attachments.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
 import '../widgets/room_mosaic.dart';
 import 'building_tabs.dart';
 import 'invites.dart';
 import 'room.dart';
+import 'tasks.dart';
 
 class BuildingsScreen extends StatelessWidget {
   const BuildingsScreen({super.key});
@@ -50,7 +52,7 @@ class BuildingsScreen extends StatelessWidget {
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
                 for (final b in rows)
                   ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.apartment)),
+                    leading: PhotoAvatar(sha: b['photo'] as String?, icon: Icons.apartment),
                     title: Text(b['name'] as String? ?? ''),
                     subtitle: b['address'] == null ? null : Text(b['address'] as String),
                     trailing: const Icon(Icons.chevron_right),
@@ -81,44 +83,50 @@ class BuildingScreen extends StatelessWidget {
               : EmptyState(Icons.delete, l.deleted));
         }
         final staff = role?.isStaff ?? true;
+        final worker = role == Role.worker;
+        final tabs = [
+          if (!worker) (l.units, UnitsTab(building: b, readOnly: !staff)),
+          if (staff) (l.tenants, TenantsTab(building: b)),
+          if (staff) (l.recurringBills, RecurringBillsTab(building: b)),
+          if (staff || worker) (l.tasks, TasksTab(building: b, role: role)),
+          (l.members, MembersTab(building: b, role: role)),
+        ];
         return DefaultTabController(
-          length: staff ? 4 : 2,
+          length: tabs.length,
           child: Scaffold(
             appBar: AppBar(
               title: Text(b['name'] as String? ?? ''),
               actions: [
-                if (staff) IconButton(
-                  icon: const Icon(Icons.edit),
-                  tooltip: l.edit,
-                  onPressed: () => editEntity(context,
-                      table: 'buildings', building: buildingId, title: l.edit,
-                      fields: buildingFields(l), row: b),
-                ),
-                if (role?.canDeleteBuilding ?? false)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    tooltip: l.delete,
-                    onPressed: () async {
-                      if (await confirm(context, l.confirmDelete) && context.mounted) {
+                if (staff)
+                  PopupMenuButton<String>(
+                    onSelected: (v) async {
+                      if (v == 'edit') {
+                        await editEntity(context,
+                            table: 'buildings', building: buildingId, title: l.edit,
+                            fields: buildingFields(l), row: b);
+                      } else if (v == 'photo') {
+                        final sha = await pickPhoto(context);
+                        if (sha != null && context.mounted) {
+                          await setEntityPhoto(context, 'buildings', buildingId, buildingId, sha);
+                        }
+                      } else if (v == 'delete' && await confirm(context, l.confirmDelete) && context.mounted) {
                         await guarded(context, () => context.app.ledger.delete('buildings', buildingId, buildingId));
                         if (context.mounted) Navigator.pop(context);
                       }
                     },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'edit', child: Text(l.edit)),
+                      PopupMenuItem(value: 'photo', child: Text(l.setPhoto)),
+                      if (role?.canDeleteBuilding ?? false)
+                        PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                    ],
                   ),
               ],
-              bottom: TabBar(isScrollable: true, tabs: [
-                Tab(text: l.units),
-                if (staff) Tab(text: l.tenants),
-                if (staff) Tab(text: l.recurringBills),
-                Tab(text: l.members),
+              bottom: TabBar(isScrollable: true, tabAlignment: TabAlignment.start, tabs: [
+                for (final t in tabs) Tab(text: t.$1),
               ]),
             ),
-            body: TabBarView(children: [
-              UnitsTab(building: b, readOnly: !staff),
-              if (staff) TenantsTab(building: b),
-              if (staff) RecurringBillsTab(building: b),
-              MembersTab(building: b, role: role),
-            ]),
+            body: TabBarView(children: [for (final t in tabs) t.$2]),
           ),
         );
       },
@@ -163,8 +171,12 @@ class UnitsTab extends StatelessWidget {
           child: const Icon(Icons.add),
         ),
         body: d.apartments.isEmpty
-            ? EmptyState(Icons.door_front_door, l.noApartments)
+            ? Column(children: [
+                PhotoBanner(sha: building['photo'] as String?, icon: Icons.apartment),
+                Expanded(child: EmptyState(Icons.door_front_door, l.noApartments)),
+              ])
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                PhotoBanner(sha: building['photo'] as String?, icon: Icons.apartment),
                 if (readOnly)
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -198,7 +210,7 @@ class UnitsTab extends StatelessWidget {
     final rented = rooms.where((r) => d.active.containsKey(r['id'])).length;
     return ExpansionTile(
       initiallyExpanded: true,
-      leading: const Icon(Icons.door_front_door),
+      leading: PhotoAvatar(sha: apt['photo'] as String?, icon: Icons.door_front_door),
       title: Text(apt['name'] as String? ?? ''),
       subtitle: Text(l.roomsRented(rented, rooms.length)),
       trailing: readOnly ? null : PopupMenuButton<String>(
@@ -206,6 +218,9 @@ class UnitsTab extends StatelessWidget {
           if (v == 'edit') {
             await editEntity(context, table: 'apartments', building: bid, title: l.edit,
                 fields: apartmentFields(l), row: apt);
+          } else if (v == 'photo') {
+            final sha = await pickPhoto(context);
+            if (sha != null && context.mounted) await setEntityPhoto(context, 'apartments', bid, apt['id'] as String, sha);
           } else if (v == 'room') {
             await editEntity(context, table: 'rooms', building: bid, title: l.newRoom,
                 fields: roomFields(l, d.apartments),
@@ -217,6 +232,7 @@ class UnitsTab extends StatelessWidget {
         itemBuilder: (_) => [
           PopupMenuItem(value: 'room', child: Text(l.newRoom)),
           PopupMenuItem(value: 'edit', child: Text(l.edit)),
+          PopupMenuItem(value: 'photo', child: Text(l.setPhoto)),
           PopupMenuItem(value: 'delete', child: Text(l.delete)),
         ],
       ),
@@ -253,7 +269,7 @@ class UnitsTab extends StatelessWidget {
     }
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 56, right: 16),
-      leading: const Icon(Icons.bed_outlined),
+      leading: PhotoAvatar(sha: r['photo'] as String?, icon: Icons.bed_outlined, radius: 16),
       title: Text(r['name'] as String? ?? ''),
       subtitle: tenant == null ? null : Text(tenant['name'] as String? ?? ''),
       trailing: badge,

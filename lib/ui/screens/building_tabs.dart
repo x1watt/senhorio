@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/dates.dart';
+import '../../data/queries.dart';
 import '../../data/zx_store.dart';
 import '../../domain/recurrence.dart';
 import '../../domain/roles.dart';
@@ -8,6 +9,7 @@ import '../../identity/identity_service.dart';
 import '../forms.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
+import '../widgets/people.dart';
 import 'expenses.dart';
 import 'invites.dart';
 
@@ -161,16 +163,16 @@ class MembersTab extends StatelessWidget {
               label: Text(l.invite),
               onPressed: () => inviteToBuilding(context, bid),
             ),
-      body: LiveFuture<List<DbRow>>(
-        load: (a) => a.q.members(bid),
-        builder: (context, rows) => ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+      body: LiveFuture<(List<DbRow>, Map<String, Person>)>(
+        load: (a) async => (await a.q.members(bid), await a.q.people()),
+        builder: (context, d) => ListView(padding: const EdgeInsets.only(bottom: 88), children: [
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(manages ? l.membersHelpOwner : l.membersHelpMember,
                 style: Theme.of(context).textTheme.bodySmall),
           ),
           if (canInvite) OpenInvites(building: bid),
-          for (final m in rows) _memberTile(context, bid, me, mine, m),
+          for (final m in d.$1) _memberTile(context, bid, me, mine, m, d.$2),
           if (manages)
             Align(
               alignment: Alignment.centerLeft,
@@ -188,25 +190,49 @@ class MembersTab extends StatelessWidget {
     );
   }
 
-  Widget _memberTile(BuildContext context, String bid, String me, Role? mine, DbRow m) {
+  Widget _memberTile(BuildContext context, String bid, String me, Role? mine, DbRow m, Map<String, Person> people) {
     final l = context.l;
     final pk = m['pubkey'] as String;
     final r = pk == building['owner'] ? Role.owner : (roleOf(m['role']) ?? Role.mod);
     final canEdit = mine != null && pk != me && mine.canManage(r, null);
+    final canNickname = (mine?.isStaff ?? false) && pk != me;
+    final p = people[pk];
+    final roleIcon = switch (r) {
+      Role.owner => Icons.verified_user,
+      Role.admin => Icons.admin_panel_settings,
+      Role.mod => Icons.manage_accounts,
+      Role.user => Icons.person,
+      Role.worker => Icons.cleaning_services,
+    };
+    // The nickname first; the name they gave themselves when it differs.
+    final self = p?.profileName;
+    final subtitle = [
+      l.roleName(r.name),
+      if (self != null && p?.nickname != null && self != p?.nickname) self,
+      shortNpub(pk),
+    ].join(' · ');
     return ListTile(
-      leading: Icon(switch (r) {
-        Role.owner => Icons.verified_user,
-        Role.admin => Icons.admin_panel_settings,
-        Role.mod => Icons.manage_accounts,
-        Role.user => Icons.person,
-      }),
-      title: Text((m['name'] as String?) ?? (pk == me ? l.you : shortNpub(pk))),
-      subtitle: Text('${l.roleName(r.name)} · ${shortNpub(pk)}'),
-      trailing: !canEdit
+      leading: Stack(clipBehavior: Clip.none, children: [
+        PersonAvatar(pubkey: pk, people: people),
+        Positioned(
+          right: -4,
+          bottom: -4,
+          child: CircleAvatar(
+            radius: 9,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            child: Icon(roleIcon, size: 13),
+          ),
+        ),
+      ]),
+      title: Text(personName(context, pk, people)),
+      subtitle: Text(subtitle),
+      trailing: !canEdit && !canNickname
           ? null
           : PopupMenuButton<String>(
               onSelected: (v) async {
-                if (v == 'revoke') {
+                if (v == 'nickname') {
+                  await editNickname(context, pk);
+                } else if (v == 'revoke') {
                   if (await confirm(context, l.confirmRevoke) && context.mounted) {
                     await guarded(context, () => context.app.ledger.delete('members', bid, m['id'] as String));
                   }
@@ -216,10 +242,13 @@ class MembersTab extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                for (final g in mine.canGrant)
-                  if (g != r && g != Role.user && r != Role.user)
-                    PopupMenuItem(value: g.name, child: Text('${l.changeRole}: ${l.roleName(g.name)}')),
-                PopupMenuItem(value: 'revoke', child: Text(l.revoke)),
+                if (canNickname) PopupMenuItem(value: 'nickname', child: Text(l.nickname)),
+                if (canEdit) ...[
+                  for (final g in mine.canGrant)
+                    if (g != r && g != Role.user && r != Role.user)
+                      PopupMenuItem(value: g.name, child: Text('${l.changeRole}: ${l.roleName(g.name)}')),
+                  PopupMenuItem(value: 'revoke', child: Text(l.revoke)),
+                ],
               ],
             ),
     );
