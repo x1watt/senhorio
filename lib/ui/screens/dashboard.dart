@@ -7,6 +7,7 @@ import '../../domain/rent_schedule.dart';
 import '../widgets/common.dart';
 import 'expenses.dart';
 import 'room.dart';
+import 'shared_bills.dart';
 import 'tasks.dart';
 
 class _Late {
@@ -27,7 +28,8 @@ class _DashData {
   final List<_Upcoming> upcoming;
   final int income, expenses, buildings;
   final List<DbRow> review; // tasks marked done, waiting for approval
-  _DashData(this.late, this.upcoming, this.income, this.expenses, this.buildings, this.review);
+  final List<DbRow> toConfirm; // bill shares a tenant marked paid
+  _DashData(this.late, this.upcoming, this.income, this.expenses, this.buildings, this.review, this.toConfirm);
 }
 
 class DashboardScreen extends StatelessWidget {
@@ -83,7 +85,14 @@ class DashboardScreen extends StatelessWidget {
               .where((e) => (e['date'] as String? ?? '').startsWith(month))
               .fold<int>(0, (s, e) => s + ((e['amount_cents'] as int?) ?? 0));
           final review = (await a.q.tasks()).where((t) => t['status'] == 'done' && buildings.containsKey(t['building_id'])).toList();
-          return _DashData(late, upcoming, income, spent, buildings.length, review);
+          final toConfirm = <DbRow>[];
+          for (final sh in await a.q.billShares()) {
+            if (sh['status'] != 'paid') continue;
+            final bill = await a.q.byId('shared_bills', sh['bill_id'] as String);
+            if (bill == null || bill['deleted'] == 1 || !buildings.containsKey(bill['building_id'])) continue;
+            toConfirm.add({...bill, 'tenant_name': tenants[sh['tenant_id']]?['name'], 'share_cents': sh['amount_cents']});
+          }
+          return _DashData(late, upcoming, income, spent, buildings.length, review, toConfirm);
         },
         builder: (context, d) {
           final scheme = Theme.of(context).colorScheme;
@@ -127,6 +136,23 @@ class DashboardScreen extends StatelessWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.push(context, MaterialPageRoute(
                           builder: (_) => TaskScreen(taskId: t['id'] as String))),
+                    ),
+                ]),
+              ),
+            ],
+            if (d.toConfirm.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SectionHeader(l.sharesToConfirm),
+                  for (final s in d.toConfirm)
+                    ListTile(
+                      leading: const Icon(Icons.hourglass_top, color: Colors.orange),
+                      title: Text('${s['tenant_name'] ?? '?'} · ${context.money(s['share_cents'] as int?)}'),
+                      subtitle: Text(s['title'] as String? ?? ''),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => SharedBillScreen(billId: s['id'] as String))),
                     ),
                 ]),
               ),

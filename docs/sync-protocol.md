@@ -39,7 +39,7 @@ generation with now (`AS OF GENERATION`).
   | `owner` | everything |
   | `admin` | everything, including members, except the owner's own row |
   | `mod` (old rows: `member`) | all data, but not members, except adding and revoking tenants (`user`) and workers |
-  | `user` (tenant) | only the contact fields and documents of its own `tenants` row (`schema.tenantOwnFields`); receives only its own rows (see below) |
+  | `user` (tenant) | only the contact fields and documents of its own `tenants` row (`schema.tenantOwnFields`), and only until a manager sets `details_locked`; `status: paid` (+ `paid_at`, `note`) on its own `bill_shares` row until a manager confirms it; receives only its own rows (see below) |
   | `worker` | only `status: done`, `photos`, `done_at` and `done_note` on a `tasks` row assigned to it; receives only those tasks |
 
 - Everyone writes their own `profiles` row (global, id = pubkey) and
@@ -64,7 +64,9 @@ A tenant's device gets only the rows of the building it may see
 - the building row;
 - its own `members` row and the rows of the owner, admins and mods;
 - its `tenants` row (the member row's `tenant_id`);
-- its leases, their payments, rooms and apartments.
+- its leases, their payments, rooms and apartments;
+- its `bill_shares` rows and the `shared_bills` they belong to (not the
+  other tenants' shares).
 
 A worker's device gets the building row, the same `members` rows and the
 `tasks` rows whose `assignee` it is. Tasks carry the place in words

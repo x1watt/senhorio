@@ -42,6 +42,19 @@ Android and desktop (Linux, Windows, macOS).
   - **Workers** (cleaning, repairs) see only the tasks given to them.
   - Members can also be added by npub. Roles can be changed and members
     revoked.
+- **Shared bills** (building → Shared bills): a manager enters a bill
+  (the energy of an apartment, say), picks the group (that apartment's
+  tenants, or the whole building's) and the amount is split evenly. Each
+  tenant marks their part "I have paid"; a manager confirms it, after
+  which the tenant can no longer touch it. Payments to confirm show on
+  the dashboard.
+- **Tenant details approval:** once a manager approves a tenant's
+  details (lease card → "Approve the tenant's details"), the tenant can
+  no longer change or erase them; only managers can.
+- **Overdue warnings for tenants:** late rent and unpaid shared bills
+  past their date show as a red banner on the tenant's screens and, on
+  Android, as a permanent notification until the managers register the
+  payment.
 - **Profiles and nicknames:** everyone sets a name and a picture (More →
   My profile) that the people they share buildings with see. Managers can
   also give a member a nickname of their own, kept only on their device.

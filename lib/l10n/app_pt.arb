@@ -286,5 +286,148 @@
   "changePhoto": "Mudar foto",
   "setPhoto": "Definir foto",
   "editMyDetails": "Editar os meus dados",
-  "myDocumentsHelp": "Os documentos que juntar aqui só são vistos pelos gestores deste prédio."
+  "myDocumentsHelp": "Os documentos que juntar aqui só são vistos pelos gestores deste prédio.",
+  "sharedBills": "Contas partilhadas",
+  "newSharedBill": "Nova conta partilhada",
+  "sharedBillTitleHint": "Luz de outubro, água…",
+  "totalAmount": "Valor total",
+  "dueDate": "Data limite",
+  "whoShares": "Quem partilha",
+  "allTenantsOfBuilding": "Todos os inquilinos do prédio",
+  "tenantsOfApartment": "Inquilinos de {name}",
+  "@tenantsOfApartment": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noTenantsInGroup": "Nenhum inquilino com contrato em vigor nesse grupo.",
+  "splitHelp": "{total} dividido em partes iguais por {n} inquilinos:",
+  "@splitHelp": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noSharedBillsStaff": "Ainda sem contas partilhadas. Introduza uma conta (a luz de um apartamento, por exemplo): é dividida em partes iguais pelos inquilinos, cada um marca a sua parte como paga e você confirma.",
+  "noSharedBillsTenant": "Não tem contas partilhadas.",
+  "dueOn": "até {date}",
+  "@dueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sharesProgress": "{confirmed}/{total} confirmadas",
+  "@sharesProgress": {
+    "placeholders": {
+      "confirmed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sharesPaidToConfirm": "{n} por confirmar",
+  "@sharesPaidToConfirm": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "yourShare": "A sua parte",
+  "ofTotal": "de {total}",
+  "@ofTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "shares": "Partes",
+  "shareStatus": "{status, select, open{Por pagar} paid{Paga, por confirmar} confirmed{Confirmada} other{Por pagar}}",
+  "@shareStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "overdue": "Em atraso",
+  "paidOnLine": "Marcada como paga {time}",
+  "@paidOnLine": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmedOnLine": "Confirmada {time}",
+  "@confirmedOnLine": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "overdueSince": "Em atraso desde {date}",
+  "@overdueSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "markPaid": "Já paguei",
+  "markPaidHint": "Transferência, dinheiro…",
+  "waitingConfirmation": "À espera que um gestor confirme o pagamento.",
+  "confirmPaid": "Confirmar pagamento",
+  "confirmAllPaid": "Confirmar todas as pagas ({n})",
+  "@confirmAllPaid": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "reopen": "Reabrir",
+  "sharesToConfirm": "Contas partilhadas: pagamentos por confirmar",
+  "paymentsOverdue": "Pagamentos em atraso",
+  "rentLateLine": "Renda: {amount} em atraso ({n} períodos)",
+  "@rentLateLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "billLateLine": "{title}: {amount}, venceu em {date}",
+  "@billLateLine": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "overdueHelp": "Acerte com os gestores; este aviso desaparece quando registarem o pagamento.",
+  "approveDetails": "Aprovar os dados do inquilino",
+  "detailsLockedStaff": "Dados aprovados (toque para desbloquear)",
+  "detailsLockedTenant": "Os seus dados e documentos foram aprovados pelos gestores: peça-lhes qualquer alteração."
 }

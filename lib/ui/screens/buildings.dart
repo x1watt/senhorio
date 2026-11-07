@@ -4,6 +4,7 @@ import '../../data/zx_store.dart';
 import '../../domain/rent_schedule.dart';
 import '../../domain/roles.dart';
 import '../forms.dart';
+import '../widgets/alerts.dart';
 import '../widgets/attachments.dart';
 import '../widgets/common.dart';
 import '../widgets/entity_form.dart';
@@ -11,6 +12,7 @@ import '../widgets/room_mosaic.dart';
 import 'building_tabs.dart';
 import 'invites.dart';
 import 'room.dart';
+import 'shared_bills.dart';
 import 'tasks.dart';
 
 class BuildingsScreen extends StatelessWidget {
@@ -50,6 +52,7 @@ class BuildingsScreen extends StatelessWidget {
                 ),
               ])
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                const TenantAlertsBanner(),
                 for (final b in rows)
                   ListTile(
                     leading: PhotoAvatar(sha: b['photo'] as String?, icon: Icons.apartment),
@@ -88,6 +91,7 @@ class BuildingScreen extends StatelessWidget {
           if (!worker) (l.units, UnitsTab(building: b, readOnly: !staff)),
           if (staff) (l.tenants, TenantsTab(building: b)),
           if (staff) (l.recurringBills, RecurringBillsTab(building: b)),
+          if (!worker) (l.sharedBills, SharedBillsTab(building: b, role: role)),
           if (staff || worker) (l.tasks, TasksTab(building: b, role: role)),
           (l.members, MembersTab(building: b, role: role)),
         ];
@@ -177,6 +181,7 @@ class UnitsTab extends StatelessWidget {
               ])
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
                 PhotoBanner(sha: building['photo'] as String?, icon: Icons.apartment),
+                if (readOnly) TenantAlertsBanner(building: bid),
                 if (readOnly)
                   Padding(
                     padding: const EdgeInsets.all(16),

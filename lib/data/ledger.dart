@@ -310,7 +310,9 @@ class Ledger extends ChangeNotifier {
     if (e.entity == 'buildings' && e.op == 'delete') {
       return r.canDeleteBuilding ? null : EventStatus.rejected;
     }
-    if (r == Role.user) return _tenantOwnRow(e);
+    if (r == Role.user) {
+      return e.entity == 'bill_shares' ? _tenantOwnShare(e) : _tenantOwnRow(e);
+    }
     if (r == Role.worker) return _workerOwnTask(e);
     return r.canWrite(e.entity) ? null : EventStatus.rejected;
   }
@@ -328,10 +330,33 @@ class Ledger extends ChangeNotifier {
   /// row their membership points at.
   Future<EventStatus?> _tenantOwnRow(LedgerEvent e) async {
     if (e.entity != 'tenants' || e.op != 'upsert') return EventStatus.rejected;
-    final m = await store.first(
-        'SELECT tenant_id FROM members WHERE id = ?', ['${e.building}:${e.author}']);
-    if (m == null || m['tenant_id'] != e.entityId) return EventStatus.rejected;
+    final tid = await _tenantOf(e.building, e.author);
+    if (tid == null || tid != e.entityId) return EventStatus.rejected;
     if (e.fields.keys.any((f) => !tenantOwnFields.contains(f))) return EventStatus.rejected;
+    // Approved by the managers: only they change it from now on.
+    final row = await store.first('SELECT details_locked FROM tenants WHERE id = ?', [e.entityId]);
+    if (row?['details_locked'] == 1) return EventStatus.rejected;
+    return null;
+  }
+
+  /// The tenant row [pubkey] is in [building], by its membership.
+  Future<String?> _tenantOf(String building, String pubkey) async {
+    final m = await store.first('SELECT tenant_id FROM members WHERE id = ?', ['$building:$pubkey']);
+    return m?['tenant_id'] as String?;
+  }
+
+  /// A tenant says their own share of a bill is paid; a manager confirms
+  /// it, and after that the tenant changes nothing. The share must be
+  /// known first (pending otherwise).
+  Future<EventStatus?> _tenantOwnShare(LedgerEvent e) async {
+    if (e.op != 'upsert') return EventStatus.rejected;
+    final s = await store.first('SELECT tenant_id, status, deleted FROM bill_shares WHERE id = ?', [e.entityId]);
+    if (s == null) return EventStatus.pending;
+    final tid = await _tenantOf(e.building, e.author);
+    if (tid == null || s['tenant_id'] != tid || s['deleted'] == 1) return EventStatus.rejected;
+    if (s['status'] == 'confirmed') return EventStatus.rejected;
+    if (e.fields.keys.any((f) => !tenantShareFields.contains(f))) return EventStatus.rejected;
+    if (e.fields.containsKey('status') && e.fields['status'] != 'paid') return EventStatus.rejected;
     return null;
   }
 

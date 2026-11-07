@@ -1,6 +1,10 @@
 package com.x1watt.senhorio
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -105,6 +109,17 @@ class MainActivity : FlutterActivity() {
                         result.error("save", e.message, null)
                     }
                 }
+                // A permanent notification with what the tenant owes
+                // (late rent, unpaid shared bills); cleared when settled.
+                "showAlert" -> {
+                    showAlert(call.argument<String>("title") ?: "", call.argument<String>("text") ?: "")
+                    result.success(true)
+                }
+                "clearAlert" -> {
+                    (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                        .cancel(ALERT_ID)
+                    result.success(true)
+                }
                 "requestNotifications" -> {
                     if (Build.VERSION.SDK_INT >= 33 &&
                         checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -118,6 +133,40 @@ class MainActivity : FlutterActivity() {
             }
         }
         channel = ch
+    }
+
+    private fun showAlert(title: String, text: String) {
+        val ctx = applicationContext
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            nm.createNotificationChannel(
+                NotificationChannel(ALERT_CHANNEL, "Payments due", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    description = "Late rent and unpaid shared bills"
+                }
+            )
+        }
+        val open = PendingIntent.getActivity(
+            ctx, 1,
+            Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val b = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(ctx, ALERT_CHANNEL)
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(ctx)
+        }
+        nm.notify(
+            ALERT_ID,
+            b.setContentTitle(title)
+                .setContentText(text)
+                .setStyle(Notification.BigTextStyle().bigText(text))
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(open)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .build()
+        )
     }
 
     private fun saveToDownloads(src: java.io.File, name: String): String {
@@ -152,6 +201,8 @@ class MainActivity : FlutterActivity() {
     companion object {
         const val ENGINE_ID = "senhorio_engine"
         const val CHANNEL = "com.x1watt.senhorio/bg"
+        const val ALERT_CHANNEL = "senhorio_alerts"
+        const val ALERT_ID = 4243
 
         /** Shared with SyncService for the heartbeat. */
         @Volatile

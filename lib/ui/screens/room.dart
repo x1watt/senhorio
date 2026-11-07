@@ -219,6 +219,7 @@ class _LeaseCard extends StatelessWidget {
     final dues = status.dues.reversed.take(12).toList();
     final held = depositHeld(payments);
     final docs = _docs(tenant);
+    final locked = tenant?['details_locked'] == 1;
     return Card(
       margin: const EdgeInsets.all(12),
       child: Padding(
@@ -229,13 +230,14 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: Text(tenant?['name'] as String? ?? '?',
                 style: Theme.of(context).textTheme.titleMedium)),
-            if (ownTenant && tenant != null)
+            if (ownTenant && tenant != null && !locked)
               IconButton(
                 icon: const Icon(Icons.edit),
                 tooltip: l.editMyDetails,
                 onPressed: () => editEntity(context, table: 'tenants', building: bid, title: l.editMyDetails,
                     fields: tenantOwnFieldSpecs(l), row: tenant),
               ),
+            if (ownTenant && locked) Tooltip(message: l.detailsLockedTenant, child: const Icon(Icons.lock, size: 20)),
             if (!readOnly) PopupMenuButton<String>(
               onSelected: (v) async {
                 if (v == 'edit') {
@@ -287,12 +289,24 @@ class _LeaseCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(l.idDocuments, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 4),
-            if (ownTenant) Text(l.myDocumentsHelp, style: Theme.of(context).textTheme.bodySmall),
+            if (ownTenant) Text(locked ? l.detailsLockedTenant : l.myDocumentsHelp, style: Theme.of(context).textTheme.bodySmall),
             AttachmentList(
               shas: docs,
-              onChanged: readOnly && !ownTenant ? null : (list) => guarded(context, () => context.app.ledger.upsert(
+              onChanged: readOnly && !(ownTenant && !locked) ? null : (list) => guarded(context, () => context.app.ledger.upsert(
                   'tenants', bid, {'id_documents': list}, id: tenant!['id'] as String)),
             ),
+            // The managers approve what the tenant entered; from then on the
+            // tenant cannot change or erase it.
+            if (!readOnly)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  icon: Icon(locked ? Icons.lock : Icons.lock_open, size: 18),
+                  label: Text(locked ? l.detailsLockedStaff : l.approveDetails),
+                  onPressed: () => guarded(context, () => context.app.ledger.upsert(
+                      'tenants', bid, {'details_locked': locked ? 0 : 1}, id: tenant!['id'] as String)),
+                ),
+              ),
           ],
           // ---- deposit
           const Divider(),

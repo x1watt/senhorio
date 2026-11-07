@@ -2,10 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:senhorio/core/ids.dart';
 import 'package:senhorio/data/ledger.dart';
 import 'package:senhorio/data/queries.dart';
 import 'package:senhorio/data/zx_store.dart';
+import 'package:senhorio/domain/alerts.dart';
 import 'package:senhorio/domain/roles.dart';
+import 'package:senhorio/domain/shared_bills.dart';
 import 'package:senhorio/identity/identity_service.dart';
 import 'package:senhorio/sync/invites.dart';
 import 'package:senhorio/sync/sync_engine.dart';
@@ -162,6 +165,50 @@ void main() {
     await wire.settle();
     expect((await alice.q.byId('tenants', ana))!['phone'], '999');
     expect(await alice.q.hasAttachment(doc), isTrue);
+
+    // once the managers approve her details, carol changes nothing more
+    await bob.l.upsert('tenants', b, {'details_locked': 1}, id: ana);
+    await wire.settle();
+    await expectLater(() => carol.l.upsert('tenants', b, {'phone': '000'}, id: ana), throwsStateError);
+    await expectLater(() => carol.l.upsert('tenants', b, {'id_documents': []}, id: ana), throwsStateError);
+    expect((await alice.q.byId('tenants', ana))!['phone'], '999');
+    await bob.l.upsert('tenants', b, {'details_locked': 0}, id: ana);
+    await wire.settle();
+    await carol.l.upsert('tenants', b, {'phone': '955'}, id: ana);
+    await wire.settle();
+    expect((await alice.q.byId('tenants', ana))!['phone'], '955');
+
+    // a bill shared by the apartment's tenants: carol sees the bill and her
+    // share only, says she paid, and bob confirms; then it is final
+    expect(splitEvenly(1000, 3), [334, 333, 333]);
+    final billId = newId();
+    final shareAna = newId(), shareRui = newId();
+    await bob.l.batch([
+      (entity: 'shared_bills', building: b, id: billId, op: 'upsert',
+          fields: {'title': 'Luz', 'apartment_id': apt, 'amount_cents': 1001, 'due_date': '2026-01-31'}),
+      (entity: 'bill_shares', building: b, id: shareAna, op: 'upsert',
+          fields: {'bill_id': billId, 'tenant_id': ana, 'amount_cents': 501, 'status': 'open'}),
+      (entity: 'bill_shares', building: b, id: shareRui, op: 'upsert',
+          fields: {'bill_id': billId, 'tenant_id': rui, 'amount_cents': 500, 'status': 'open'}),
+    ]);
+    await wire.settle();
+    expect((await carol.q.sharedBills()).single['title'], 'Luz');
+    expect((await carol.q.billShares()).map((s) => s['id']), [shareAna]);
+    final alerts = await tenantAlerts(carol.q, carol.l, now: DateTime(2026, 4, 15));
+    expect(alerts.single.overdueBills.single['share_cents'], 501);
+    expect(alerts.single.lateRentCents, greaterThan(0)); // rent since January, one payment
+    await expectLater(() => carol.l.upsert('bill_shares', b, {'status': 'paid'}, id: shareRui), throwsStateError);
+    await expectLater(() => carol.l.upsert('bill_shares', b, {'status': 'confirmed'}, id: shareAna), throwsStateError);
+    await expectLater(() => carol.l.upsert('bill_shares', b, {'amount_cents': 1}, id: shareAna), throwsStateError);
+    await carol.l.upsert('bill_shares', b, {'status': 'paid', 'paid_at': '2026-02-01T10:00'}, id: shareAna);
+    await wire.settle();
+    expect((await bob.q.byId('bill_shares', shareAna))!['status'], 'paid');
+    await bob.l.upsert('bill_shares', b, {'status': 'confirmed', 'confirmed_by': bob.id.pubkey}, id: shareAna);
+    await wire.settle();
+    expect((await carol.q.byId('bill_shares', shareAna))!['status'], 'confirmed');
+    await expectLater(() => carol.l.upsert('bill_shares', b, {'note': 'x'}, id: shareAna), throwsStateError);
+    expect(await tenantAlerts(carol.q, carol.l, now: DateTime(2026, 4, 15)), hasLength(1));
+    expect((await tenantAlerts(carol.q, carol.l, now: DateTime(2026, 4, 15))).single.overdueBills, isEmpty);
 
     // a worker: sees only the tasks given to them, and marks them done
     final forWorker = await bob.inv.create(b, Role.worker, name: 'Cleaner');

@@ -12,8 +12,11 @@ import 'data/queries.dart';
 import 'data/zx_store.dart';
 import 'domain/category_learner.dart';
 import 'demo/demo_data.dart';
+import 'core/money.dart';
+import 'domain/alerts.dart';
 import 'domain/checkpoints.dart';
 import 'identity/identity_service.dart';
+import 'platform/alerts.dart';
 import 'platform/background.dart';
 import 'platform/backup.dart';
 import 'sync/sync_service.dart';
@@ -59,8 +62,45 @@ class AppState extends ChangeNotifier {
       BackgroundSync.init(s.sync.nativeTick);
       s.sync.notificationText = s._notificationText();
       if (await s.sync.enabled()) unawaited(s.sync.start());
+      s._watchAlerts();
     }
     return s;
+  }
+
+  // ----------------------------------------------------- tenant alerts
+
+  Timer? _alertTimer;
+
+  /// Keeps the Android notification in step with what this tenant owes:
+  /// after every change (debounced) and once an hour (dates move on).
+  void _watchAlerts() {
+    ledger.addListener(() {
+      _alertTimer?.cancel();
+      _alertTimer = Timer(const Duration(seconds: 3), () => unawaited(refreshAlerts()));
+    });
+    Timer.periodic(const Duration(hours: 1), (_) => unawaited(refreshAlerts()));
+    unawaited(refreshAlerts());
+  }
+
+  Future<void> refreshAlerts() async {
+    try {
+      final alerts = await tenantAlerts(q, ledger);
+      final pt = (locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode) == 'pt';
+      final lines = <String>[];
+      for (final a in alerts) {
+        final m = formatMoney(a.totalCents, locale: pt ? 'pt' : 'en');
+        lines.add(pt
+            ? '${a.buildingName}: $m em atraso'
+                '${a.lateRentCents > 0 ? ' (renda: ${a.latePeriods} ${a.latePeriods == 1 ? 'período' : 'períodos'})' : ''}'
+                '${a.overdueBills.isNotEmpty ? ' (${a.overdueBills.length} ${a.overdueBills.length == 1 ? 'conta' : 'contas'})' : ''}'
+            : '${a.buildingName}: $m overdue'
+                '${a.lateRentCents > 0 ? ' (rent: ${a.latePeriods} ${a.latePeriods == 1 ? 'period' : 'periods'})' : ''}'
+                '${a.overdueBills.isNotEmpty ? ' (${a.overdueBills.length} ${a.overdueBills.length == 1 ? 'bill' : 'bills'})' : ''}');
+      }
+      await AlertNotification.set(pt ? 'Pagamentos em atraso' : 'Payments overdue', lines.join('\n'));
+    } catch (_) {
+      // never let a notification problem reach the UI
+    }
   }
 
   (String, String) _notificationText() {
@@ -83,6 +123,7 @@ class AppState extends ChangeNotifier {
 
   /// Stops syncing and closes the archive.
   Future<void> shutdown() async {
+    _alertTimer?.cancel();
     await sync.stop();
     await store.close();
   }

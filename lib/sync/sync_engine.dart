@@ -134,6 +134,12 @@ class SyncEngine {
           if (a['apartment_id'] != null) ids.add('apartments/${a['apartment_id']}');
         }
       }
+      // Their shares of bills, and those bills (not the other shares).
+      for (final r in await store.query(
+          'SELECT id, bill_id FROM bill_shares WHERE building_id = ? AND tenant_id = ?', [building, tid])) {
+        ids.add('bill_shares/${r['id']}');
+        ids.add('shared_bills/${r['bill_id']}');
+      }
     }
     return PartialScope(ids);
   }
@@ -385,7 +391,7 @@ class SyncEngine {
     // ask again.
     final widened = {
       for (final (b, entity) in ledger.lastApplied)
-        if (entity == 'leases' || entity == 'members') b,
+        if (entity == 'leases' || entity == 'members' || entity == 'bill_shares') b,
     };
     var again = false;
     for (final b in widened) {

@@ -979,4 +979,152 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get myDocumentsHelp =>
       'Documents you add here are seen only by the managers of this building.';
+
+  @override
+  String get sharedBills => 'Shared bills';
+
+  @override
+  String get newSharedBill => 'New shared bill';
+
+  @override
+  String get sharedBillTitleHint => 'Energy October, water…';
+
+  @override
+  String get totalAmount => 'Total amount';
+
+  @override
+  String get dueDate => 'Due date';
+
+  @override
+  String get whoShares => 'Who shares it';
+
+  @override
+  String get allTenantsOfBuilding => 'All tenants of the building';
+
+  @override
+  String tenantsOfApartment(String name) {
+    return 'Tenants of $name';
+  }
+
+  @override
+  String get noTenantsInGroup =>
+      'No tenant with a current lease in that group.';
+
+  @override
+  String splitHelp(String total, int n) {
+    return '$total split evenly between $n tenants:';
+  }
+
+  @override
+  String get noSharedBillsStaff =>
+      'No shared bills yet. Enter a bill (the energy of an apartment, for example): it is split evenly between its tenants, each marks their part paid, and you confirm it.';
+
+  @override
+  String get noSharedBillsTenant => 'No shared bills for you.';
+
+  @override
+  String dueOn(String date) {
+    return 'due $date';
+  }
+
+  @override
+  String sharesProgress(int confirmed, int total) {
+    return '$confirmed/$total confirmed';
+  }
+
+  @override
+  String sharesPaidToConfirm(int n) {
+    return '$n to confirm';
+  }
+
+  @override
+  String get yourShare => 'Your share';
+
+  @override
+  String ofTotal(String total) {
+    return 'of $total';
+  }
+
+  @override
+  String get shares => 'Shares';
+
+  @override
+  String shareStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'open': 'To pay',
+      'paid': 'Paid, to confirm',
+      'confirmed': 'Confirmed',
+      'other': 'To pay',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get overdue => 'Overdue';
+
+  @override
+  String paidOnLine(String time) {
+    return 'Marked paid $time';
+  }
+
+  @override
+  String confirmedOnLine(String time) {
+    return 'Confirmed $time';
+  }
+
+  @override
+  String overdueSince(String date) {
+    return 'Overdue since $date';
+  }
+
+  @override
+  String get markPaid => 'I have paid';
+
+  @override
+  String get markPaidHint => 'Transfer, cash…';
+
+  @override
+  String get waitingConfirmation =>
+      'Waiting for a manager to confirm the payment.';
+
+  @override
+  String get confirmPaid => 'Confirm payment';
+
+  @override
+  String confirmAllPaid(int n) {
+    return 'Confirm all paid ($n)';
+  }
+
+  @override
+  String get reopen => 'Reopen';
+
+  @override
+  String get sharesToConfirm => 'Shared bills: payments to confirm';
+
+  @override
+  String get paymentsOverdue => 'Payments overdue';
+
+  @override
+  String rentLateLine(String amount, int n) {
+    return 'Rent: $amount late ($n periods)';
+  }
+
+  @override
+  String billLateLine(String title, String amount, String date) {
+    return '$title: $amount, was due $date';
+  }
+
+  @override
+  String get overdueHelp =>
+      'Settle with the managers; this warning goes away once they register the payment.';
+
+  @override
+  String get approveDetails => 'Approve the tenant\'s details';
+
+  @override
+  String get detailsLockedStaff => 'Details approved (tap to unlock)';
+
+  @override
+  String get detailsLockedTenant =>
+      'Your details and documents were approved by the managers: ask them to change anything.';
 }

@@ -978,4 +978,152 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get myDocumentsHelp =>
       'Os documentos que juntar aqui só são vistos pelos gestores deste prédio.';
+
+  @override
+  String get sharedBills => 'Contas partilhadas';
+
+  @override
+  String get newSharedBill => 'Nova conta partilhada';
+
+  @override
+  String get sharedBillTitleHint => 'Luz de outubro, água…';
+
+  @override
+  String get totalAmount => 'Valor total';
+
+  @override
+  String get dueDate => 'Data limite';
+
+  @override
+  String get whoShares => 'Quem partilha';
+
+  @override
+  String get allTenantsOfBuilding => 'Todos os inquilinos do prédio';
+
+  @override
+  String tenantsOfApartment(String name) {
+    return 'Inquilinos de $name';
+  }
+
+  @override
+  String get noTenantsInGroup =>
+      'Nenhum inquilino com contrato em vigor nesse grupo.';
+
+  @override
+  String splitHelp(String total, int n) {
+    return '$total dividido em partes iguais por $n inquilinos:';
+  }
+
+  @override
+  String get noSharedBillsStaff =>
+      'Ainda sem contas partilhadas. Introduza uma conta (a luz de um apartamento, por exemplo): é dividida em partes iguais pelos inquilinos, cada um marca a sua parte como paga e você confirma.';
+
+  @override
+  String get noSharedBillsTenant => 'Não tem contas partilhadas.';
+
+  @override
+  String dueOn(String date) {
+    return 'até $date';
+  }
+
+  @override
+  String sharesProgress(int confirmed, int total) {
+    return '$confirmed/$total confirmadas';
+  }
+
+  @override
+  String sharesPaidToConfirm(int n) {
+    return '$n por confirmar';
+  }
+
+  @override
+  String get yourShare => 'A sua parte';
+
+  @override
+  String ofTotal(String total) {
+    return 'de $total';
+  }
+
+  @override
+  String get shares => 'Partes';
+
+  @override
+  String shareStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'open': 'Por pagar',
+      'paid': 'Paga, por confirmar',
+      'confirmed': 'Confirmada',
+      'other': 'Por pagar',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get overdue => 'Em atraso';
+
+  @override
+  String paidOnLine(String time) {
+    return 'Marcada como paga $time';
+  }
+
+  @override
+  String confirmedOnLine(String time) {
+    return 'Confirmada $time';
+  }
+
+  @override
+  String overdueSince(String date) {
+    return 'Em atraso desde $date';
+  }
+
+  @override
+  String get markPaid => 'Já paguei';
+
+  @override
+  String get markPaidHint => 'Transferência, dinheiro…';
+
+  @override
+  String get waitingConfirmation =>
+      'À espera que um gestor confirme o pagamento.';
+
+  @override
+  String get confirmPaid => 'Confirmar pagamento';
+
+  @override
+  String confirmAllPaid(int n) {
+    return 'Confirmar todas as pagas ($n)';
+  }
+
+  @override
+  String get reopen => 'Reabrir';
+
+  @override
+  String get sharesToConfirm => 'Contas partilhadas: pagamentos por confirmar';
+
+  @override
+  String get paymentsOverdue => 'Pagamentos em atraso';
+
+  @override
+  String rentLateLine(String amount, int n) {
+    return 'Renda: $amount em atraso ($n períodos)';
+  }
+
+  @override
+  String billLateLine(String title, String amount, String date) {
+    return '$title: $amount, venceu em $date';
+  }
+
+  @override
+  String get overdueHelp =>
+      'Acerte com os gestores; este aviso desaparece quando registarem o pagamento.';
+
+  @override
+  String get approveDetails => 'Aprovar os dados do inquilino';
+
+  @override
+  String get detailsLockedStaff => 'Dados aprovados (toque para desbloquear)';
+
+  @override
+  String get detailsLockedTenant =>
+      'Os seus dados e documentos foram aprovados pelos gestores: peça-lhes qualquer alteração.';
 }

@@ -47,6 +47,9 @@ const entityFields = <String, Map<String, String>>{
     'tax_id': 'TEXT',
     'id_documents': 'TEXT', // JSON list of sha256 (table attachments)
     'notes': 'TEXT',
+    // 1 once the managers approved what the tenant entered: from then on
+    // only the managers change the row (the tenant cannot erase it).
+    'details_locked': 'INTEGER',
   },
   'leases': {
     'room_id': 'TEXT',
@@ -142,6 +145,26 @@ const entityFields = <String, Map<String, String>>{
     'reviewed_at': 'TEXT',
     'review_note': 'TEXT',
   },
+  // A bill a group of tenants shares (the energy of an apartment...),
+  // split into one `bill_shares` row per tenant.
+  'shared_bills': {
+    'title': 'TEXT',
+    'apartment_id': 'TEXT', // the group: the apartment's tenants (null: the building's)
+    'amount_cents': 'INTEGER',
+    'due_date': 'TEXT',
+    'description': 'TEXT',
+    'attachments': 'TEXT', // JSON list of sha256 (the bill itself)
+  },
+  'bill_shares': {
+    'bill_id': 'TEXT',
+    'tenant_id': 'TEXT',
+    'amount_cents': 'INTEGER',
+    'status': 'TEXT', // open | paid (the tenant says so) | confirmed (by a manager)
+    'paid_at': 'TEXT',
+    'confirmed_by': 'TEXT',
+    'confirmed_at': 'TEXT',
+    'note': 'TEXT',
+  },
 };
 
 /// Columns holding attachment hashes: a JSON list, or one sha256 string.
@@ -150,6 +173,7 @@ const blobFields = <String, List<String>>{
   'expenses': ['attachments'],
   'tenants': ['id_documents'],
   'tasks': ['photos'],
+  'shared_bills': ['attachments'],
   'profiles': ['photo'],
   'buildings': ['photo'],
   'apartments': ['photo'],
@@ -158,6 +182,13 @@ const blobFields = <String, List<String>>{
 
 /// Fields a tenant may change on their own `tenants` row.
 const tenantOwnFields = {'phone', 'phone2', 'email', 'emergency_contact', 'id_documents'};
+
+/// Fields a tenant may change on their own share of a bill (to say it is
+/// paid), while a manager has not confirmed it.
+const tenantShareFields = {'status', 'paid_at', 'note'};
+
+/// Values of `bill_shares.status`.
+const shareStatuses = ['open', 'paid', 'confirmed'];
 
 /// Fields a worker may change on a task assigned to them.
 const workerTaskFields = {'status', 'photos', 'done_at', 'done_note'};

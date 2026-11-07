@@ -128,6 +128,21 @@ class Queries {
         [?building, ?assignee]);
   }
 
+  // --------------------------------------------------------- shared bills
+
+  Future<List<DbRow>> sharedBills({String? building}) => s.query(
+      'SELECT * FROM shared_bills WHERE $_live ${building == null ? '' : 'AND building_id = ? '}ORDER BY due_date DESC',
+      [?building]);
+
+  Future<List<DbRow>> billShares({String? bill, String? tenant, String? building}) {
+    final where = [_live, if (bill != null) 'bill_id = ?', if (tenant != null) 'tenant_id = ?', if (building != null) 'building_id = ?'];
+    return s.query('SELECT * FROM bill_shares WHERE ${where.join(' AND ')}', [?bill, ?tenant, ?building]);
+  }
+
+  /// The tenant row [me] is, in [building] (null: not a tenant there).
+  Future<String?> myTenantId(String building, String me) async =>
+      (await s.first('SELECT tenant_id FROM members WHERE id = ? AND $_live', ['$building:$me']))?['tenant_id'] as String?;
+
   // --------------------------------------------------------------- people
 
   Future<DbRow?> profile(String pubkey) => s.first('SELECT * FROM profiles WHERE id = ?', [pubkey]);

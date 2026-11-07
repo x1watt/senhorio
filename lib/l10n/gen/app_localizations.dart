@@ -1699,6 +1699,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Documents you add here are seen only by the managers of this building.'**
   String get myDocumentsHelp;
+
+  /// No description provided for @sharedBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared bills'**
+  String get sharedBills;
+
+  /// No description provided for @newSharedBill.
+  ///
+  /// In en, this message translates to:
+  /// **'New shared bill'**
+  String get newSharedBill;
+
+  /// No description provided for @sharedBillTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy October, water…'**
+  String get sharedBillTitleHint;
+
+  /// No description provided for @totalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total amount'**
+  String get totalAmount;
+
+  /// No description provided for @dueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get dueDate;
+
+  /// No description provided for @whoShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Who shares it'**
+  String get whoShares;
+
+  /// No description provided for @allTenantsOfBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'All tenants of the building'**
+  String get allTenantsOfBuilding;
+
+  /// No description provided for @tenantsOfApartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Tenants of {name}'**
+  String tenantsOfApartment(String name);
+
+  /// No description provided for @noTenantsInGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'No tenant with a current lease in that group.'**
+  String get noTenantsInGroup;
+
+  /// No description provided for @splitHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'{total} split evenly between {n} tenants:'**
+  String splitHelp(String total, int n);
+
+  /// No description provided for @noSharedBillsStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared bills yet. Enter a bill (the energy of an apartment, for example): it is split evenly between its tenants, each marks their part paid, and you confirm it.'**
+  String get noSharedBillsStaff;
+
+  /// No description provided for @noSharedBillsTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared bills for you.'**
+  String get noSharedBillsTenant;
+
+  /// No description provided for @dueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'due {date}'**
+  String dueOn(String date);
+
+  /// No description provided for @sharesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{confirmed}/{total} confirmed'**
+  String sharesProgress(int confirmed, int total);
+
+  /// No description provided for @sharesPaidToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} to confirm'**
+  String sharesPaidToConfirm(int n);
+
+  /// No description provided for @yourShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share'**
+  String get yourShare;
+
+  /// No description provided for @ofTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {total}'**
+  String ofTotal(String total);
+
+  /// No description provided for @shares.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares'**
+  String get shares;
+
+  /// No description provided for @shareStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, open{To pay} paid{Paid, to confirm} confirmed{Confirmed} other{To pay}}'**
+  String shareStatus(String status);
+
+  /// No description provided for @overdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get overdue;
+
+  /// No description provided for @paidOnLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked paid {time}'**
+  String paidOnLine(String time);
+
+  /// No description provided for @confirmedOnLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed {time}'**
+  String confirmedOnLine(String time);
+
+  /// No description provided for @overdueSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue since {date}'**
+  String overdueSince(String date);
+
+  /// No description provided for @markPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'I have paid'**
+  String get markPaid;
+
+  /// No description provided for @markPaidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer, cash…'**
+  String get markPaidHint;
+
+  /// No description provided for @waitingConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a manager to confirm the payment.'**
+  String get waitingConfirmation;
+
+  /// No description provided for @confirmPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm payment'**
+  String get confirmPaid;
+
+  /// No description provided for @confirmAllPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm all paid ({n})'**
+  String confirmAllPaid(int n);
+
+  /// No description provided for @reopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get reopen;
+
+  /// No description provided for @sharesToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared bills: payments to confirm'**
+  String get sharesToConfirm;
+
+  /// No description provided for @paymentsOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments overdue'**
+  String get paymentsOverdue;
+
+  /// No description provided for @rentLateLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent: {amount} late ({n} periods)'**
+  String rentLateLine(String amount, int n);
+
+  /// No description provided for @billLateLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}: {amount}, was due {date}'**
+  String billLateLine(String title, String amount, String date);
+
+  /// No description provided for @overdueHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle with the managers; this warning goes away once they register the payment.'**
+  String get overdueHelp;
+
+  /// No description provided for @approveDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve the tenant\'s details'**
+  String get approveDetails;
+
+  /// No description provided for @detailsLockedStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Details approved (tap to unlock)'**
+  String get detailsLockedStaff;
+
+  /// No description provided for @detailsLockedTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Your details and documents were approved by the managers: ask them to change anything.'**
+  String get detailsLockedTenant;
 }
 
 class _AppLocalizationsDelegate
