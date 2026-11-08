@@ -14,6 +14,7 @@ import 'invites.dart';
 import 'room.dart';
 import 'shared_bills.dart';
 import 'tasks.dart';
+import 'update_dialog.dart';
 
 class BuildingsScreen extends StatelessWidget {
   const BuildingsScreen({super.key});
@@ -52,6 +53,7 @@ class BuildingsScreen extends StatelessWidget {
                 ),
               ])
             : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                const UpdateReadyBanner(),
                 const TenantAlertsBanner(),
                 for (final b in rows)
                   ListTile(

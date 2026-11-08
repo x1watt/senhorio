@@ -626,5 +626,18 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateReady": "Version {v} is ready to install",
+  "@updateReady": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "updateReadyHelp": "Downloaded and waiting. The installer asks you to confirm; your data stays as it is.",
+  "installNow": "Install now",
+  "updateDownloading": "Downloading the update…",
+  "updateCheckFailed": "Could not reach GitHub. Try again later.",
+  "updatesAutomatic": "The app looks for a new version every day and downloads it for you."
 }

@@ -58,7 +58,9 @@ something reusable.
 | `FieldType.datetime` in `EntityForm`, `isoDateTime`, `formatDateTime` / `formatTimeRange` | `lib/ui/widgets/entity_form.dart`, `lib/core/dates.dart`, `lib/ui/widgets/common.dart` | Date-time fields and ranges in forms and lists |
 | `RoomMosaic` (coloured tiles, staggered grow-in, pulsing alert) | `lib/ui/widgets/room_mosaic.dart` | Any at-a-glance status board |
 | `Backups` (export to public Downloads via MediaStore on Android / save dialog on desktop; `verify` → `stage` → `commit` restore with the previous archive kept; one pasted restore key parsed from free text) + `AppState.onRestart` / `shutdown` | `lib/platform/backup.dart`, `MainActivity.kt` (`saveToDownloads`), `lib/app_state.dart`, `lib/main.dart` | Backup/restore of any single-file database, with an in-place app restart |
-| `UpdateService` + `checkForUpdates` dialog + `installApk` channel (GitHub latest release → download → system installer) | `lib/platform/updates.dart`, `lib/ui/screens/update_dialog.dart`, `MainActivity.kt` | Self-updating Android apps published on GitHub releases |
+| `UpdateService` (GitHub latest release → `download` to cache with size check → `install` via `installApk` channel) | `lib/platform/updates.dart`, `MainActivity.kt` | Self-updating Android apps published on GitHub releases |
+| `UpdateWatcher` (daily check driven by an hourly timer + the native heartbeat; silent download; found release kept in `meta` so the offer survives restarts; `shouldOffer`/`offered` "Later" back-off; injectable fetchers for tests) + `UpdateReadyBanner` / `offerUpdate` dialog / `UpdateNotification` | `lib/platform/update_watcher.dart`, `lib/ui/screens/update_dialog.dart`, `lib/platform/alerts.dart` | Any "check in the background, download, then offer" flow (updates, data packs) |
+| `MainActivity.postNotification(id, channel, …, ongoing)` | `MainActivity.kt` | Any extra Android notification: one call, its own channel, taps open the app |
 | `depositHeld`, `isRentPayment`, `paymentKinds` | `lib/domain/rent_schedule.dart` | Deposits/provisions kept apart from rent |
 
 ## Tests

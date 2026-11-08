@@ -1951,6 +1951,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid back by the tenants: {recovered} of {total}'**
   String recoveredOfTotal(String recovered, String total);
+
+  /// No description provided for @updateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {v} is ready to install'**
+  String updateReady(String v);
+
+  /// No description provided for @updateReadyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded and waiting. The installer asks you to confirm; your data stays as it is.'**
+  String get updateReadyHelp;
+
+  /// No description provided for @installNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Install now'**
+  String get installNow;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the update…'**
+  String get updateDownloading;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach GitHub. Try again later.'**
+  String get updateCheckFailed;
+
+  /// No description provided for @updatesAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'The app looks for a new version every day and downloads it for you.'**
+  String get updatesAutomatic;
 }
 
 class _AppLocalizationsDelegate

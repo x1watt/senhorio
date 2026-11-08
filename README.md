@@ -83,8 +83,11 @@ Android and desktop (Linux, Windows, macOS).
     keep it with the file, e.g. in a password manager. Restoring on a
     fresh install brings back the data and the identity.
 - Portuguese and English; dark (black) theme.
-- **Updates:** the app checks GitHub releases once a day; on Android it
-  downloads the new APK and opens the installer.
+- **Updates:** the app checks GitHub releases once a day for as long as it
+  runs (also in the background on Android), downloads the new APK quietly
+  and then offers it: a dialog when the app is opened, a card on the home
+  screens, a notification, and *More → Install now*. The system installer
+  asks for the final confirmation.
 - One identity (nsec) can be restored on another device, and several
   devices of the same person sync with each other like members do.
 - Emails and documents: the structure is in place (`documents` table);

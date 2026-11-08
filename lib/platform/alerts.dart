@@ -1,5 +1,5 @@
-// The permanent "you owe" notification on Android (MainActivity.showAlert).
-// No-op elsewhere: the in-app banner (ui/widgets/alerts.dart) does the job.
+// The permanent "you owe" notification and the "update ready" one on
+// Android (MainActivity). No-op elsewhere: the in-app banners do the job.
 
 import 'dart:io';
 
@@ -25,6 +25,31 @@ class AlertNotification {
         await _ch.invokeMethod('requestNotifications');
         await _ch.invokeMethod('showAlert', {'title': title, 'text': text});
       }
+    } on MissingPluginException {
+      // tests
+    }
+  }
+}
+
+/// "A new version is ready to install" on Android (MainActivity.showUpdate):
+/// a normal notification, cleared once the update is installed.
+class UpdateNotification {
+  static const _ch = MethodChannel('com.x1watt.senhorio/bg');
+
+  static Future<void> show(String title, String text) async {
+    if (!AlertNotification.supported) return;
+    try {
+      await _ch.invokeMethod('requestNotifications');
+      await _ch.invokeMethod('showUpdate', {'title': title, 'text': text});
+    } on MissingPluginException {
+      // tests
+    }
+  }
+
+  static Future<void> clear() async {
+    if (!AlertNotification.supported) return;
+    try {
+      await _ch.invokeMethod('clearUpdate');
     } on MissingPluginException {
       // tests
     }

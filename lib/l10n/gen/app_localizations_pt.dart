@@ -1143,4 +1143,27 @@ class AppLocalizationsPt extends AppLocalizations {
   String recoveredOfTotal(String recovered, String total) {
     return 'Devolvido pelos inquilinos: $recovered de $total';
   }
+
+  @override
+  String updateReady(String v) {
+    return 'Versão $v pronta a instalar';
+  }
+
+  @override
+  String get updateReadyHelp =>
+      'Descarregada e à espera. O instalador pede confirmação; os seus dados ficam como estão.';
+
+  @override
+  String get installNow => 'Instalar agora';
+
+  @override
+  String get updateDownloading => 'A descarregar a atualização…';
+
+  @override
+  String get updateCheckFailed =>
+      'Não foi possível contactar o GitHub. Tente mais tarde.';
+
+  @override
+  String get updatesAutomatic =>
+      'A app procura uma nova versão todos os dias e descarrega-a por si.';
 }

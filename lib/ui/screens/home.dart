@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/ledger.dart';
 import '../../app_state.dart';
+import '../../platform/update_watcher.dart';
+import '../../platform/updates.dart';
 import '../widgets/common.dart';
 import 'buildings.dart';
 import 'dashboard.dart';
@@ -20,20 +24,45 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
+  AppLifecycleListener? _lifecycle;
+  UpdateWatcher? _updates;
+  bool _offering = false;
 
   @override
   void initState() {
     super.initState();
-    // Once a day, offer the latest GitHub release (no-op on the web).
+    // The daily check runs in AppState.updates for as long as the process
+    // lives; here we offer what it found: when it arrives, and each time
+    // the app comes back to the front (at most once a day after "Later").
     if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final app = context.app;
-        final last = int.tryParse(await app.store.getMeta('update_check') ?? '') ?? 0;
-        final now = DateTime.now().millisecondsSinceEpoch;
-        if (now - last < const Duration(hours: 20).inMilliseconds) return;
-        await app.store.exec('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', ['update_check', '$now']);
-        if (mounted) await checkForUpdates(context);
+      _updates = context.app.updates..addListener(_maybeOffer);
+      _lifecycle = AppLifecycleListener(onResume: () {
+        unawaited(_updates?.poll());
+        _maybeOffer();
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOffer());
+    }
+  }
+
+  @override
+  void dispose() {
+    _updates?.removeListener(_maybeOffer);
+    _lifecycle?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _maybeOffer() async {
+    final w = _updates;
+    if (w == null || _offering || !mounted) return;
+    if (w.ready == null || (w.apk == null && UpdateService.canInstall)) return; // not downloaded yet
+    if (!await w.shouldOffer()) return;
+    if (!mounted) return;
+    _offering = true;
+    try {
+      await w.offered(); // not again for a day unless they install
+      if (mounted) await offerUpdate(context);
+    } finally {
+      _offering = false;
     }
   }
 

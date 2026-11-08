@@ -61,14 +61,29 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(l.comingSoon),
           enabled: false,
         ),
-        if (!kIsWeb) ListTile(
-          leading: const Icon(Icons.system_update),
-          title: Text(l.checkForUpdates),
-          subtitle: FutureBuilder<String>(
-            future: UpdateService.installedVersion(),
-            builder: (c, s) => Text('${l.installedVersion} ${s.data ?? ''}'),
-          ),
-          onTap: () => checkForUpdates(context, manual: true),
+        if (!kIsWeb) ListenableBuilder(
+          listenable: app.updates,
+          builder: (context, _) {
+            final r = app.updates.ready;
+            if (r != null) {
+              return ListTile(
+                leading: Icon(Icons.system_update, color: Theme.of(context).colorScheme.primary),
+                title: Text(l.updateReady(r.version)),
+                subtitle: Text(app.updates.apk == null && UpdateService.canInstall ? l.updateDownloading : l.updateReadyHelp),
+                trailing: FilledButton(onPressed: () => offerUpdate(context), child: Text(l.installNow)),
+                onTap: () => offerUpdate(context),
+              );
+            }
+            return ListTile(
+              leading: const Icon(Icons.system_update),
+              title: Text(l.checkForUpdates),
+              subtitle: FutureBuilder<String>(
+                future: UpdateService.installedVersion(),
+                builder: (c, s) => Text('${l.installedVersion} ${s.data ?? ''} · ${l.updatesAutomatic}'),
+              ),
+              onTap: () => checkForUpdates(context, manual: true),
+            );
+          },
         ),
         if (!kIsWeb) ListTile(
           leading: const Icon(Icons.save_alt),

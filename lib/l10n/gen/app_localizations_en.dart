@@ -1144,4 +1144,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String recoveredOfTotal(String recovered, String total) {
     return 'Paid back by the tenants: $recovered of $total';
   }
+
+  @override
+  String updateReady(String v) {
+    return 'Version $v is ready to install';
+  }
+
+  @override
+  String get updateReadyHelp =>
+      'Downloaded and waiting. The installer asks you to confirm; your data stays as it is.';
+
+  @override
+  String get installNow => 'Install now';
+
+  @override
+  String get updateDownloading => 'Downloading the update…';
+
+  @override
+  String get updateCheckFailed => 'Could not reach GitHub. Try again later.';
+
+  @override
+  String get updatesAutomatic =>
+      'The app looks for a new version every day and downloads it for you.';
 }

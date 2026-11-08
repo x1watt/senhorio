@@ -120,6 +120,18 @@ class MainActivity : FlutterActivity() {
                         .cancel(ALERT_ID)
                     result.success(true)
                 }
+                // "A new version is ready": a normal notification that opens
+                // the app, where the update dialog offers the install.
+                "showUpdate" -> {
+                    postNotification(UPDATE_ID, UPDATE_CHANNEL, "App updates", "A new version is ready to install",
+                        call.argument<String>("title") ?: "", call.argument<String>("text") ?: "", ongoing = false)
+                    result.success(true)
+                }
+                "clearUpdate" -> {
+                    (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                        .cancel(UPDATE_ID)
+                    result.success(true)
+                }
                 "requestNotifications" -> {
                     if (Build.VERSION.SDK_INT >= 33 &&
                         checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -135,35 +147,44 @@ class MainActivity : FlutterActivity() {
         channel = ch
     }
 
-    private fun showAlert(title: String, text: String) {
+    private fun showAlert(title: String, text: String) =
+        postNotification(ALERT_ID, ALERT_CHANNEL, "Payments due", "Late rent and unpaid shared bills",
+            title, text, ongoing = true)
+
+    /** One notification on its own channel; tapping it opens the app. */
+    private fun postNotification(
+        id: Int, channel: String, channelName: String, channelDescription: String,
+        title: String, text: String, ongoing: Boolean
+    ) {
         val ctx = applicationContext
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm.createNotificationChannel(
-                NotificationChannel(ALERT_CHANNEL, "Payments due", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                    description = "Late rent and unpaid shared bills"
+                NotificationChannel(channel, channelName, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    description = channelDescription
                 }
             )
         }
         val open = PendingIntent.getActivity(
-            ctx, 1,
+            ctx, id,
             Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val b = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(ctx, ALERT_CHANNEL)
+            Notification.Builder(ctx, channel)
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(ctx)
         }
         nm.notify(
-            ALERT_ID,
+            id,
             b.setContentTitle(title)
                 .setContentText(text)
                 .setStyle(Notification.BigTextStyle().bigText(text))
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(open)
-                .setOngoing(true)
+                .setOngoing(ongoing)
+                .setAutoCancel(!ongoing)
                 .setOnlyAlertOnce(true)
                 .build()
         )
@@ -203,6 +224,8 @@ class MainActivity : FlutterActivity() {
         const val CHANNEL = "com.x1watt.senhorio/bg"
         const val ALERT_CHANNEL = "senhorio_alerts"
         const val ALERT_ID = 4243
+        const val UPDATE_CHANNEL = "senhorio_updates"
+        const val UPDATE_ID = 4244
 
         /** Shared with SyncService for the heartbeat. */
         @Volatile

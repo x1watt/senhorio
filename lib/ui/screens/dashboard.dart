@@ -9,6 +9,7 @@ import 'expenses.dart';
 import 'room.dart';
 import 'shared_bills.dart';
 import 'tasks.dart';
+import 'update_dialog.dart';
 
 class _Late {
   final LeaseStatus status;
@@ -98,6 +99,7 @@ class DashboardScreen extends StatelessWidget {
           final scheme = Theme.of(context).colorScheme;
           if (d.buildings == 0) return EmptyState(Icons.apartment, l.welcome);
           return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 88), children: [
+            const UpdateReadyBanner(),
             Row(children: [
               Expanded(child: _Stat(l.incomeThisMonth, context.money(d.income), Colors.green)),
               const SizedBox(width: 8),

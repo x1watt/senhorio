@@ -444,5 +444,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateReady": "Versão {v} pronta a instalar",
+  "updateReadyHelp": "Descarregada e à espera. O instalador pede confirmação; os seus dados ficam como estão.",
+  "installNow": "Instalar agora",
+  "updateDownloading": "A descarregar a atualização…",
+  "updateCheckFailed": "Não foi possível contactar o GitHub. Tente mais tarde.",
+  "updatesAutomatic": "A app procura uma nova versão todos os dias e descarrega-a por si."
 }

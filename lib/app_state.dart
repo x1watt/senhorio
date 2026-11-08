@@ -19,6 +19,8 @@ import 'identity/identity_service.dart';
 import 'platform/alerts.dart';
 import 'platform/background.dart';
 import 'platform/backup.dart';
+import 'platform/update_watcher.dart';
+import 'platform/updates.dart';
 import 'sync/sync_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -29,6 +31,7 @@ class AppState extends ChangeNotifier {
   final Queries q;
   final Checkpoints checkpoints;
   final SyncService sync;
+  late final UpdateWatcher updates = UpdateWatcher(store, notification: _updateNotificationText);
   Locale? locale;
 
   AppState._(this.dataDir, this.identityService, this.store, this.ledger)
@@ -59,10 +62,16 @@ class AppState extends ChangeNotifier {
     if (kIsWeb && (await s.q.buildings()).isEmpty) await seedDemoData(s.ledger, s.checkpoints);
     await s.checkpoints.autoDaily(id.pubkey);
     if (network) {
-      BackgroundSync.init(s.sync.nativeTick);
+      // The service heartbeat also drives the daily update check: Dart
+      // timers stall in the background, the native one does not.
+      BackgroundSync.init(() async {
+        await s.sync.nativeTick();
+        await s.updates.poll();
+      });
       s.sync.notificationText = s._notificationText();
       if (await s.sync.enabled()) unawaited(s.sync.start());
       s._watchAlerts();
+      s.updates.start();
     }
     return s;
   }
@@ -103,6 +112,12 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  bool get _pt => (locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode) == 'pt';
+
+  (String, String) _updateNotificationText(ReleaseInfo r) => _pt
+      ? ('Senhorio ${r.version} pronto a instalar', 'Toque para abrir a app e instalar a nova versão')
+      : ('Senhorio ${r.version} is ready to install', 'Tap to open the app and install the new version');
+
   (String, String) _notificationText() {
     final lang = locale?.languageCode ?? PlatformDispatcher.instance.locale.languageCode;
     return lang == 'pt'
@@ -124,6 +139,7 @@ class AppState extends ChangeNotifier {
   /// Stops syncing and closes the archive.
   Future<void> shutdown() async {
     _alertTimer?.cancel();
+    updates.dispose();
     await sync.stop();
     await store.close();
   }
